@@ -1,0 +1,23 @@
+---
+name: Lint
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: markdownlint-cli
+        uses: nosborn/github-action-markdown-cli@v3.4.0
+        with:
+          files: .
+          config_file: .markdownlint.yml
+          dot: true
+
+      - name: typos-action spellchecker
+        uses: crate-ci/typos@v1.31.2

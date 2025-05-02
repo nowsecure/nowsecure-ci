@@ -1,0 +1,96 @@
+version: "2"
+run:
+  go: "1.24"
+  timeout: 1m
+  tests: true
+linters:
+  enable:
+    - gocritic
+    - gosec
+    - misspell
+    - revive
+    - testifylint
+    - unconvert
+    - usestdlibvars
+    - whitespace
+  settings:
+    gocritic:
+      enable-all: true
+      disabled-checks:
+        - appendAssign
+        - hugeParam
+        - rangeValCopy
+        - regexpSimplify
+    govet:
+      disable:
+        - shadow
+        - fieldalignment
+      enable-all: true
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+          arguments:
+            - allowTypesBefore: "*testing.T"
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        # - name: error-strings
+        - name: errorf
+        - name: exported
+          arguments:
+            - checkPrivateReceivers
+            - sayRepetitiveInsteadOfStutters
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unreachable-code
+        - name: var-declaration
+    staticcheck:
+      checks:
+        - all
+        - "-ST1003" # Ignore "API" to "Api" naming convention suggestion
+    testifylint:
+      enable-all: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+          - gocritic
+          - gosec
+          - govet
+          - ineffassign
+          - misspell
+          - revive
+          - staticcheck
+          - unused
+          - usestdlibvars
+          - whitespace
+        path: _test\.go$
+
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+    gofumpt:
+      extra-rules: true
