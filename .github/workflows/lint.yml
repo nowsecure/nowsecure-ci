@@ -21,3 +21,6 @@ jobs:
 
       - name: typos-action spellchecker
         uses: crate-ci/typos@v1.31.2
+
+      - name: yamllint
+        uses: ibiqlik/action-yamllint@v3

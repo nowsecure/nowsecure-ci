@@ -1,3 +1,4 @@
+---
 version: "2"
 run:
   go: "1.24"
@@ -57,7 +58,8 @@ linters:
     staticcheck:
       checks:
         - all
-        - "-ST1003" # Ignore "API" to "Api" naming convention suggestion
+        # Ignore "API" to "Api" naming convention suggestion
+        - "-ST1003"
     testifylint:
       enable-all: true
   exclusions:
