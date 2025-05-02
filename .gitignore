@@ -1,0 +1,7 @@
+.idea
+.tmp
+.vscode
+bin
+release
+.DS_Store
+.direnv
