@@ -1,7 +1,6 @@
 ---
 version: "2"
 run:
-  go: "1.24"
   timeout: 1m
   tests: true
 linters:
@@ -69,20 +68,6 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
-    rules:
-      - linters:
-          - errcheck
-          - gocritic
-          - gosec
-          - govet
-          - ineffassign
-          - misspell
-          - revive
-          - staticcheck
-          - unused
-          - usestdlibvars
-          - whitespace
-        path: _test\.go$
 
 formatters:
   enable:
