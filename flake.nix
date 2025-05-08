@@ -21,6 +21,8 @@
             pkgs.go_1_24
             pkgs.gopls
             pkgs.golangci-lint
+            pkgs.gci
+
             pkgs.oapi-codegen
             pkgs.cobra-cli
 

@@ -72,12 +72,10 @@ linters:
 formatters:
   enable:
     - gci
-    - gofumpt
+    - gofmt
   settings:
     gci:
       sections:
         - standard
         - default
         - localmodule
-    gofumpt:
-      extra-rules: true
