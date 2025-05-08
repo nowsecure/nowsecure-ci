@@ -6,22 +6,12 @@ import (
 
 var (
 	analysisType   string
-	shouldPoll     bool
 	pollForMinutes int
 	minimumScore   int
 	group          string
 )
 
-type RunOptions struct {
-	analysisType   string
-	shouldPoll     bool
-	pollForMinutes int
-	minimumScore   int
-	group          string
-}
-
 func NewRunCommand() *cobra.Command {
-
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an assessment for a given application",

@@ -3,8 +3,9 @@ package cmd
 import (
 	"os"
 
-	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
 	"github.com/spf13/cobra"
+
+	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
 )
 
 // rootCmd represents the base command when called without any subcommands

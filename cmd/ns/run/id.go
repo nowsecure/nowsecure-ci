@@ -19,9 +19,9 @@ func NewRunIdCommand() *cobra.Command {
 		ValidArgs: []string{"appId"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("package called")
+			appId = args[0]
+			fmt.Println("package called with ", appId)
 		},
 	}
 	return idCmd
-
 }

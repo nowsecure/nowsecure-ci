@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	android bool
-	ios     bool
+	android     bool
+	ios         bool
+	packageName string
 )
 
 func NewRunPackageCommand() *cobra.Command {
@@ -20,7 +21,8 @@ func NewRunPackageCommand() *cobra.Command {
 		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("package called")
+			packageName = args[0]
+			fmt.Println("package called with package ", packageName)
 		},
 	}
 
