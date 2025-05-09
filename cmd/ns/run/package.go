@@ -26,11 +26,11 @@ func NewRunPackageCommand() *cobra.Command {
 		},
 	}
 
-	packageCmd.Flags().BoolVar(&ios, "iOS", false, "app is for iOS platform")
+	packageCmd.Flags().BoolVar(&ios, "ios", false, "app is for ios platform")
 	packageCmd.Flags().BoolVar(&android, "android", false, "app is for android platform")
 
-	packageCmd.MarkFlagsOneRequired("iOS", "android")
-	packageCmd.MarkFlagsMutuallyExclusive("iOS", "android")
+	packageCmd.MarkFlagsOneRequired("ios", "android")
+	packageCmd.MarkFlagsMutuallyExclusive("ios", "android")
 
 	return packageCmd
 }
