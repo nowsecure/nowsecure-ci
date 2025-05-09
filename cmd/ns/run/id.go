@@ -7,7 +7,6 @@ import (
 )
 
 func NewRunIdCommand() *cobra.Command {
-	// idCmd represents the id command
 	var idCmd = &cobra.Command{
 		Use:       "id [app-id]",
 		Short:     "Run an assessment for a pre-existing app by specifying app-id",

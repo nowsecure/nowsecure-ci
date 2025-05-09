@@ -7,7 +7,6 @@ import (
 )
 
 func NewRunPackageCommand() *cobra.Command {
-	// packageCmd represents the package command
 	var packageCmd = &cobra.Command{
 		Use:       "package [package-name]",
 		Short:     "Run an assessment for a pre-existing app by specifying package and platform",
