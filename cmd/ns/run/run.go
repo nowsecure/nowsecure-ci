@@ -4,19 +4,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	analysisType   string
-	pollForMinutes int
-	minimumScore   int
-	group          string
-)
-
 func NewRunCommand() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an assessment for a given application",
 		Long:  ``,
 	}
+	var (
+		analysisType   string
+		pollForMinutes int
+		minimumScore   int
+		group          string
+	)
 
 	runCmd.PersistentFlags().StringVar(&analysisType, "analysis-type", "full", "One of: full, static, sbom")
 	runCmd.PersistentFlags().IntVar(&pollForMinutes, "poll-for-minutes", 60, "polling max duration")
