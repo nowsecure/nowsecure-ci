@@ -6,10 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	file string
-)
-
 func NewRunFileCommand() *cobra.Command {
 	// fileCmd represents the file command
 	var fileCmd = &cobra.Command{
@@ -19,7 +15,7 @@ func NewRunFileCommand() *cobra.Command {
 		ValidArgs: []string{"file"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			file = args[0]
+			file := args[0]
 			fmt.Println("file called with file ", file)
 		},
 	}

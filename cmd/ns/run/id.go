@@ -6,10 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	appId string
-)
-
 func NewRunIdCommand() *cobra.Command {
 	// idCmd represents the id command
 	var idCmd = &cobra.Command{
@@ -19,7 +15,7 @@ func NewRunIdCommand() *cobra.Command {
 		ValidArgs: []string{"appId"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			appId = args[0]
+			appId := args[0]
 			fmt.Println("package called with ", appId)
 		},
 	}

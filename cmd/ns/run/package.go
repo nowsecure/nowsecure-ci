@@ -6,12 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	android     bool
-	ios         bool
-	packageName string
-)
-
 func NewRunPackageCommand() *cobra.Command {
 	// packageCmd represents the package command
 	var packageCmd = &cobra.Command{
@@ -21,10 +15,14 @@ func NewRunPackageCommand() *cobra.Command {
 		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			packageName = args[0]
+			packageName := args[0]
 			fmt.Println("package called with package ", packageName)
 		},
 	}
+	var (
+		android bool
+		ios     bool
+	)
 
 	packageCmd.Flags().BoolVar(&ios, "ios", false, "app is for ios platform")
 	packageCmd.Flags().BoolVar(&android, "android", false, "app is for android platform")
