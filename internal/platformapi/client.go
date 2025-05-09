@@ -7,7 +7,6 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal/util"
 )
 
-// TODO pass in config for host and useragent
 func New(config util.Config, doer HttpRequestDoer) (*ClientWithResponses, error) {
 	if doer == nil {
 		doer = &http.Client{}
