@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Host  string
-	Token string
-	Group string
+	Host      string
+	Token     string
+	Group     string
+	UserAgent string
 }
 
 func NewConfig(v *viper.Viper) Config {
@@ -25,9 +26,10 @@ func NewConfig(v *viper.Viper) Config {
 	}
 
 	return Config{
-		Host:  host,
-		Token: token,
-		Group: v.GetString("group"),
+		Host:      host,
+		Token:     token,
+		Group:     v.GetString("group"),
+		UserAgent: v.GetString("userAgent"),
 	}
 }
 

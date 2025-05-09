@@ -34,6 +34,7 @@ func init() {
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
 	rootCmd.PersistentFlags().StringP("group", "g", "", "group with which to run assessments")
 
+	v.SetDefault("userAgent", "nowsecure-ci")
 	err1 := v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host"))
 	err2 := v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token"))
 	err3 := v.BindPFlag("group", rootCmd.PersistentFlags().Lookup("group"))
