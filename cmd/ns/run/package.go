@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/nowsecure/nowsecure-ci/internal/util"
+	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
 func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
@@ -19,7 +19,7 @@ func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			packageName := args[0]
-			config := util.NewConfig(v)
+			config := internal.NewConfig(v)
 			fmt.Println(config)
 			fmt.Println("package called with package ", packageName)
 		},

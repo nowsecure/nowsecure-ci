@@ -4,11 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
-	"github.com/nowsecure/nowsecure-ci/internal/util"
 )
 
 var rootCmd = &cobra.Command{
@@ -28,7 +29,7 @@ func init() {
 	configFile := ""
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $HOME/.ns-ci)")
 
-	v := util.ViperWithFile(configFile)
+	v := viperWithFile(configFile)
 
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
@@ -45,4 +46,38 @@ func init() {
 	}
 
 	rootCmd.AddCommand(run.NewRunCommand(v))
+}
+
+func viperWithFile(configFile string) *viper.Viper {
+	v := viper.New()
+	v.AutomaticEnv()
+
+	if configFile != "" {
+		v.SetConfigFile(configFile)
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		defaultName := ".ns-ci"
+
+		if _, err := os.Stat(filepath.Join(home, defaultName)); err != nil {
+			return v
+		}
+
+		v.AddConfigPath(home)
+		v.SetConfigName(defaultName)
+		v.SetConfigType("yaml")
+	}
+
+	fmt.Println(v.ConfigFileUsed())
+
+	err := v.ReadInConfig()
+	if err != nil {
+		fmt.Println("Can't read config:", err)
+		os.Exit(1)
+	}
+
+	return v
 }

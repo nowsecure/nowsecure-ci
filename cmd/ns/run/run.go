@@ -15,7 +15,6 @@ func NewRunCommand(v *viper.Viper) *cobra.Command {
 		analysisType   string
 		pollForMinutes int
 		minimumScore   int
-		group         string
 	)
 
 	runCmd.PersistentFlags().StringVar(&analysisType, "analysis-type", "full", "One of: full, static, sbom")

@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/nowsecure/nowsecure-ci/internal/util"
+	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
 func NewRunFileCommand(v *viper.Viper) *cobra.Command {
@@ -19,7 +19,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			file := args[0]
-			fmt.Println(util.NewConfig(v))
+			fmt.Println(internal.NewConfig(v))
 			fmt.Println("file called with file ", file)
 		},
 	}
