@@ -22,6 +22,8 @@ func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 			config, _ := internal.NewRunConfig(v)
 
 			packageName := args[0]
+
+			fmt.Println(ctx, config, packageName)
 		},
 	}
 
