@@ -2,27 +2,25 @@ package internal
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
-	"os"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-// TODO pass in config for host and useragent
-func ClientFromConfig(doer platformapi.HttpRequestDoer) (*platformapi.ClientWithResponses, error) {
+func ClientFromConfig(config RunConfig, doer platformapi.HttpRequestDoer) (*platformapi.ClientWithResponses, error) {
 	if doer == nil {
 		doer = &http.Client{}
 	}
 
-	host := ""
-	userAgent := ""
-
-	return platformapi.NewClientWithResponses(host,
+	return platformapi.NewClientWithResponses(config.Host,
 		platformapi.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
-			req.Header.Add("User-Agent", userAgent)
+			req.Header.Add("User-Agent", config.UserAgent)
+			req.Header.Add("Authorization", "Bearer "+config.Token)
 			return nil
 		}), platformapi.WithHTTPClient(doer))
 }
@@ -30,23 +28,56 @@ func ClientFromConfig(doer platformapi.HttpRequestDoer) (*platformapi.ClientWith
 type BaseConfig struct {
 	Host      string
 	Token     string
-	Group     string
+	Group     uuid.UUID
 	UserAgent string
 }
 
-func NewConfig(v *viper.Viper) BaseConfig {
+type RunConfig struct {
+	BaseConfig
+	AnalysisType   string
+	PollForMinutes int
+	MinimumScore   int
+	Platform       string
+}
+
+func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 	host := v.GetString("host")
 	token := v.GetString("token")
 
 	if host == "" || token == "" {
-		fmt.Println("Host and token must both be specified either in a config file, or through a flag")
-		os.Exit(1)
+		return RunConfig{}, errors.New("host and token must both be specified either in a config file, or through a flag")
 	}
 
-	return BaseConfig{
-		Host:      host,
-		Token:     token,
-		Group:     v.GetString("group"),
-		UserAgent: v.GetString("userAgent"),
+	group := uuid.Nil
+	if v.IsSet("group") {
+		var err error
+		group, err = uuid.Parse(v.GetString("group"))
+
+		if err != nil {
+			return RunConfig{}, errors.New("must have valid group")
+		}
 	}
+
+	platform := ""
+
+	if v.IsSet("platform") {
+		platform = strings.ToLower(v.GetString("platform"))
+
+		if platform != "ios" && platform != "android" {
+			return RunConfig{}, errors.New("must have valid platform")
+		}
+	}
+
+	return RunConfig{
+		BaseConfig: BaseConfig{
+			Host:      host,
+			Token:     token,
+			Group:     group,
+			UserAgent: v.GetString("userAgent"),
+		},
+		AnalysisType:   v.GetString("analysis_type"),
+		PollForMinutes: v.GetInt("poll_for_minutes"),
+		MinimumScore:   v.GetInt("minimum_score"),
+		Platform:       platform,
+	}, nil
 }

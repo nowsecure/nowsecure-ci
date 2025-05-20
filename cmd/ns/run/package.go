@@ -18,17 +18,17 @@ func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
+			config, _ := internal.NewRunConfig(v)
+
 			packageName := args[0]
-			config := internal.NewConfig(v)
-			fmt.Println(config)
-			fmt.Println("package called with package ", packageName)
 		},
 	}
+
 	var (
 		android bool
 		ios     bool
 	)
-
 	packageCmd.Flags().BoolVar(&ios, "ios", false, "app is for ios platform")
 	packageCmd.Flags().BoolVar(&android, "android", false, "app is for android platform")
 

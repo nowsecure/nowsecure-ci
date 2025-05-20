@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -19,7 +20,7 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	err := rootCmd.Execute()
+	err := rootCmd.ExecuteContext(context.Background())
 	if err != nil {
 		os.Exit(1)
 	}
@@ -29,7 +30,7 @@ func init() {
 	configFile := ""
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $HOME/.ns-ci)")
 
-	v := viperWithFile(configFile)
+	v := initViper(configFile)
 
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
@@ -48,7 +49,7 @@ func init() {
 	rootCmd.AddCommand(run.NewRunCommand(v))
 }
 
-func viperWithFile(configFile string) *viper.Viper {
+func initViper(configFile string) *viper.Viper {
 	v := viper.New()
 	v.AutomaticEnv()
 

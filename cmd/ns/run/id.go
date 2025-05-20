@@ -9,6 +9,10 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
+var (
+	appId string
+)
+
 func NewRunIdCommand(v *viper.Viper) *cobra.Command {
 	// idCmd represents the id command
 	var idCmd = &cobra.Command{
@@ -18,9 +22,9 @@ func NewRunIdCommand(v *viper.Viper) *cobra.Command {
 		ValidArgs: []string{"appId"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			appId := args[0]
-			config := internal.NewConfig(v)
+			config, _ := internal.NewRunConfig(v)
 			fmt.Println(config)
+			appId = args[0]
 			fmt.Println("package called with ", appId)
 		},
 	}
