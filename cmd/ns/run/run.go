@@ -58,7 +58,7 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 				nil)
 
 			if err != nil {
-				os.Exit(1)
+				return nil, err
 			}
 
 			fmt.Println(resp.StatusCode(), "-", *resp.JSON2XX.TaskStatus)
