@@ -45,38 +45,37 @@ func NewRunCommand(v *viper.Viper) *cobra.Command {
 func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses, packageName, platform string, task float64, minutes int) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
 	fmt.Println("Polling for ", minutes)
 
-	if minutes > 0 {
-		count := 0
+	count := 0
 
-		for count <= minutes {
-			count++
-			resp, err := client.GetAppPlatformPackageAssessmentTaskWithResponse(
-				ctx,
-				platformapi.GetAppPlatformPackageAssessmentTaskParamsPlatform(platform),
-				packageName,
-				int(task),
-				nil)
+	for count <= minutes {
+		count++
+		resp, err := client.GetAppPlatformPackageAssessmentTaskWithResponse(
+			ctx,
+			platformapi.GetAppPlatformPackageAssessmentTaskParamsPlatform(platform),
+			packageName,
+			int(task),
+			nil)
 
-			if err != nil {
-				return nil, err
-			}
-
-			fmt.Println(resp.StatusCode(), "-", *resp.JSON2XX.TaskStatus)
-
-			var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
-			var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
-			if resp.StatusCode() == 200 {
-				if *resp.JSON2XX.TaskStatus == completed || *resp.JSON2XX.TaskStatus == failed {
-					fmt.Println("Task has completed")
-					return resp, nil
-				}
-			}
-
-			fmt.Println("Sleeping")
-
-			time.Sleep(1 * time.Minute)
+		if err != nil {
+			return nil, err
 		}
+
+		fmt.Println(resp.StatusCode(), "-", *resp.JSON2XX.TaskStatus)
+
+		var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
+		var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
+		if resp.StatusCode() == 200 {
+			if *resp.JSON2XX.TaskStatus == completed || *resp.JSON2XX.TaskStatus == failed {
+				fmt.Println("Task has completed")
+				return resp, nil
+			}
+		}
+
+		fmt.Println("Sleeping")
+
+		time.Sleep(1 * time.Minute)
 	}
+
 	return nil, errors.New("assessment not completed")
 }
 
