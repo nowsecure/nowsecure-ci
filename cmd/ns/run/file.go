@@ -30,10 +30,10 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				zerolog.Ctx(ctx).Panic().Err(err).Msgf("Cannot open file %s", fileName)
 			}
 
-			config, configErr := internal.NewRunConfig(v)
+			config, err := internal.NewRunConfig(v)
 
-			if configErr != nil {
-				zerolog.Ctx(ctx).Panic().Err(configErr).Msg("Error creating config")
+			if err != nil {
+				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error creating config")
 			}
 
 			ctx = zerolog.New(internal.ConsoleLevelWriter{}).
@@ -43,16 +43,16 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				Level(config.LogLevel).
 				WithContext(cmd.Context())
 
-			client, clientErr := internal.ClientFromConfig(config, nil)
+			client, err := internal.ClientFromConfig(config, nil)
 
-			if clientErr != nil {
-				zerolog.Ctx(ctx).Panic().Err(clientErr).Msg("Error creating NowSecure API client")
+			if err != nil {
+				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error creating NowSecure API client")
 			}
 
-			buildResponse, buildErr := submitFile(ctx, file, config, client)
+			buildResponse, err := submitFile(ctx, file, config, client)
 
-			if buildErr != nil {
-				zerolog.Ctx(ctx).Panic().Err(buildErr).Msg("Error submitting file for assessment")
+			if err != nil {
+				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error submitting file for assessment")
 			}
 
 			if config.PollForMinutes <= 0 {
@@ -61,10 +61,10 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				return
 			}
 
-			taskResponse, taskErr := pollForResults(ctx, client, buildResponse.Package, buildResponse.Platform, buildResponse.Task, config.PollForMinutes)
+			taskResponse, err := pollForResults(ctx, client, buildResponse.Package, buildResponse.Platform, buildResponse.Task, config.PollForMinutes)
 
-			if taskErr != nil {
-				zerolog.Ctx(ctx).Panic().Err(taskErr).Msg("Error while polling for assessment results")
+			if err != nil {
+				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error while polling for assessment results")
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {
