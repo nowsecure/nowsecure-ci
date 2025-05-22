@@ -91,7 +91,7 @@ func submitFile(ctx context.Context, file *os.File, config internal.RunConfig, c
 		return nil, responseError
 	}
 
-	zerolog.Ctx(ctx).Debug().Int("status", response.StatusCode()).Msg("received http response")
+	zerolog.Ctx(ctx).Debug().Int("status", response.StatusCode()).Msg("Received http response")
 
 	if response.HTTPResponse.StatusCode >= 400 && response.HTTPResponse.StatusCode < 500 {
 		return nil, errors.New(*response.JSON4XX.Description)

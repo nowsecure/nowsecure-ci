@@ -58,7 +58,7 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 			return nil, err
 		}
 
-		zerolog.Ctx(ctx).Debug().Int("StatusCode", resp.StatusCode()).Interface("TaskStatus", *resp.JSON2XX.TaskStatus).Msg("assessment status response")
+		zerolog.Ctx(ctx).Debug().Int("StatusCode", resp.StatusCode()).Interface("TaskStatus", *resp.JSON2XX.TaskStatus).Msg("Assessment status response")
 
 		var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
 		var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
@@ -69,7 +69,7 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 			}
 		}
 
-		zerolog.Ctx(ctx).Debug().Msg("sleeping...")
+		zerolog.Ctx(ctx).Debug().Msg("Sleeping...")
 
 		time.Sleep(1 * time.Minute)
 	}
