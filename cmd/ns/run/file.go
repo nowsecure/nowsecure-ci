@@ -41,7 +41,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				Timestamp().
 				Logger().
 				Level(config.LogLevel).
-				WithContext(context.Background())
+				WithContext(cmd.Context())
 
 			client, clientErr := internal.ClientFromConfig(config, nil)
 
