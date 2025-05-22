@@ -1,8 +1,6 @@
 package run
 
 import (
-	"context"
-	"errors"
 	"os"
 
 	"github.com/rs/zerolog"
