@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
@@ -30,6 +31,7 @@ type BaseConfig struct {
 	Token     string
 	Group     uuid.UUID
 	UserAgent string
+	LogLevel  zerolog.Level
 }
 
 type RunConfig struct {
@@ -46,6 +48,16 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 
 	if host == "" || token == "" {
 		return RunConfig{}, errors.New("host and token must both be specified either in a config file, or through a flag")
+	}
+
+	logLevel, err := zerolog.ParseLevel(v.GetString("log_level"))
+
+	if err != nil {
+		return RunConfig{}, err
+	}
+
+	if v.GetBool("verbose") {
+		logLevel = zerolog.DebugLevel
 	}
 
 	group := uuid.Nil
@@ -74,6 +86,7 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 			Token:     token,
 			Group:     group,
 			UserAgent: v.GetString("userAgent"),
+			LogLevel:  logLevel,
 		},
 		AnalysisType:   v.GetString("analysis_type"),
 		PollForMinutes: v.GetInt("poll_for_minutes"),

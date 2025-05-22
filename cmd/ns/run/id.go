@@ -1,8 +1,9 @@
 package run
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -23,9 +24,14 @@ func NewRunIdCommand(v *viper.Viper) *cobra.Command {
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			config, _ := internal.NewRunConfig(v)
-			fmt.Println(config)
+			ctx := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
+				With().
+				Timestamp().
+				Logger().
+				Level(config.LogLevel).
+				WithContext(cmd.Context())
 			appId = args[0]
-			fmt.Println("package called with ", appId)
+			zerolog.Ctx(ctx).Info().Str("AppId", appId).Msg("package command called")
 		},
 	}
 	return idCmd

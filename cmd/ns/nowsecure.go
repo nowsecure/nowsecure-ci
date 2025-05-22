@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -20,37 +21,53 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	err := rootCmd.ExecuteContext(context.Background())
+	ctx := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
+		With().
+		Timestamp().
+		Logger().
+		Level(zerolog.FatalLevel).
+		WithContext(context.Background())
+
+	configureFlags(ctx)
+
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
-		os.Exit(1)
+		zerolog.Ctx(ctx).Panic().Err(err)
 	}
 }
 
-func init() {
+func configureFlags(ctx context.Context) {
 	configFile := ""
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $HOME/.ns-ci)")
 
-	v := initViper(configFile)
+	v := initViper(ctx, configFile)
 
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
 	rootCmd.PersistentFlags().StringP("group", "g", "", "group with which to run assessments")
+	rootCmd.PersistentFlags().StringP("log-level", "", "info", "logging level")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
+
+	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
 
 	v.SetDefault("userAgent", "nowsecure-ci")
-	err1 := v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host"))
-	err2 := v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token"))
-	err3 := v.BindPFlag("group", rootCmd.PersistentFlags().Lookup("group"))
 
-	if errs := errors.Join(err1, err2, err3); errs != nil {
-		fmt.Println(errs)
-		os.Exit(1)
+	bindingErrors := []error{v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
+		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
+		v.BindPFlag("group", rootCmd.PersistentFlags().Lookup("group")),
+		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
+		v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")),
+	}
+	if errs := errors.Join(bindingErrors...); errs != nil {
+		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding root level flags")
 	}
 
-	rootCmd.AddCommand(run.NewRunCommand(v))
+	rootCmd.AddCommand(run.NewRunCommand(ctx, v))
 }
 
-func initViper(configFile string) *viper.Viper {
+func initViper(ctx context.Context, configFile string) *viper.Viper {
 	v := viper.New()
+	v.SetEnvPrefix("NS")
 	v.AutomaticEnv()
 
 	if configFile != "" {
@@ -63,7 +80,9 @@ func initViper(configFile string) *viper.Viper {
 		}
 		defaultName := ".ns-ci"
 
-		if _, err := os.Stat(filepath.Join(home, defaultName)); err != nil {
+		configPath := filepath.Join(home, defaultName)
+		if _, err := os.Stat(configPath); err != nil {
+			zerolog.Ctx(ctx).Info().Msgf("Config file '%s' does not exist. Continuing with default config", configPath)
 			return v
 		}
 
@@ -72,12 +91,11 @@ func initViper(configFile string) *viper.Viper {
 		v.SetConfigType("yaml")
 	}
 
-	fmt.Println(v.ConfigFileUsed())
+	zerolog.Ctx(ctx).Debug().Msgf("Using config file '%s'", v.ConfigFileUsed())
 
 	err := v.ReadInConfig()
 	if err != nil {
-		fmt.Println("Can't read config:", err)
-		os.Exit(1)
+		zerolog.Ctx(ctx).Panic().Err(err).Msg("Failed to read in config file %s")
 	}
 
 	return v

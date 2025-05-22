@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -27,54 +27,52 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 			fileName := args[0]
 			file, err := os.Open(fileName)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				zerolog.Ctx(ctx).Panic().Err(err).Msgf("Cannot open file %s", fileName)
 			}
 
 			config, configErr := internal.NewRunConfig(v)
 
 			if configErr != nil {
-				fmt.Println(configErr)
-				os.Exit(1)
+				zerolog.Ctx(ctx).Panic().Err(configErr).Msg("Error creating config")
 			}
+
+			ctx = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
+				With().
+				Timestamp().
+				Logger().
+				Level(config.LogLevel).
+				WithContext(context.Background())
 
 			client, clientErr := internal.ClientFromConfig(config, nil)
 
 			if clientErr != nil {
-				fmt.Println(clientErr)
-				os.Exit(1)
+				zerolog.Ctx(ctx).Panic().Err(clientErr).Msg("Error creating NowSecure API client")
 			}
 
 			buildResponse, buildErr := submitFile(ctx, file, config, client)
 
 			if buildErr != nil {
-				fmt.Println(buildErr)
-				os.Exit(1)
+				zerolog.Ctx(ctx).Panic().Err(buildErr).Msg("Error submitting file for assessment")
 			}
 
 			if config.PollForMinutes <= 0 {
-				fmt.Println(buildResponse)
+				// TODO this should probably pretty-print the build response instead of relying on structured logs
+				zerolog.Ctx(ctx).Info().Any("Build Response", buildResponse).Msg("Succeeded")
 				return
 			}
 
 			taskResponse, taskErr := pollForResults(ctx, client, buildResponse.Package, buildResponse.Platform, buildResponse.Task, config.PollForMinutes)
 
 			if taskErr != nil {
-				fmt.Println(taskErr)
-				os.Exit(1)
-			}
-
-			if config.MinimumScore <= 0 {
-				fmt.Println(buildResponse)
-				return
+				zerolog.Ctx(ctx).Panic().Err(taskErr).Msg("Error while polling for assessment results")
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {
-				fmt.Printf("The score %.2f is less than the required minimum %d\n", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
-				os.Exit(1)
+				zerolog.Ctx(ctx).Panic().Msgf("The score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
 			}
 
-			fmt.Println(buildResponse)
+			// TODO this should probably pretty-print the build response instead of relying on structured logs
+			zerolog.Ctx(ctx).Info().Any("Assessment", taskResponse).Msg("Succeeded")
 		},
 	}
 
@@ -88,7 +86,7 @@ func submitFile(ctx context.Context, file *os.File, config internal.RunConfig, c
 	}, "application/octet-stream", file)
 
 	if responseError != nil {
-		fmt.Println(responseError)
+		return nil, responseError
 	}
 
 	if response.HTTPResponse.StatusCode >= 400 && response.HTTPResponse.StatusCode < 500 {

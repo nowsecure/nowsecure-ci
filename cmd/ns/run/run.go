@@ -3,17 +3,16 @@ package run
 import (
 	"context"
 	"errors"
-	"fmt"
-	"os"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-func NewRunCommand(v *viper.Viper) *cobra.Command {
+func NewRunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an assessment for a given application",
@@ -29,8 +28,7 @@ func NewRunCommand(v *viper.Viper) *cobra.Command {
 	err3 := v.BindPFlag("minimum_score", runCmd.PersistentFlags().Lookup("minimum-score"))
 
 	if errs := errors.Join(err1, err2, err3); errs != nil {
-		fmt.Println(errs)
-		os.Exit(1)
+		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding run level flags")
 	}
 
 	runCmd.AddCommand(
@@ -43,7 +41,7 @@ func NewRunCommand(v *viper.Viper) *cobra.Command {
 }
 
 func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses, packageName, platform string, task float64, minutes int) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
-	fmt.Println("Polling for ", minutes)
+	zerolog.Ctx(ctx).Debug().Int("minutes", minutes).Msg("Beginning polling")
 
 	count := 0
 
@@ -60,18 +58,18 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 			return nil, err
 		}
 
-		fmt.Println(resp.StatusCode(), "-", *resp.JSON2XX.TaskStatus)
+		zerolog.Ctx(ctx).Debug().Int("StatusCode", resp.StatusCode()).Any("TaskStatus", *resp.JSON2XX.TaskStatus).Msg("assessment status response")
 
 		var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
 		var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
 		if resp.StatusCode() == 200 {
 			if *resp.JSON2XX.TaskStatus == completed || *resp.JSON2XX.TaskStatus == failed {
-				fmt.Println("Task has completed")
+				zerolog.Ctx(ctx).Debug().Msg("Task has completed")
 				return resp, nil
 			}
 		}
 
-		fmt.Println("Sleeping")
+		zerolog.Ctx(ctx).Debug().Msg("sleeping...")
 
 		time.Sleep(1 * time.Minute)
 	}

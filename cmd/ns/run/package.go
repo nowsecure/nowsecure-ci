@@ -1,8 +1,11 @@
 package run
 
 import (
-	"fmt"
+	"context"
+	"errors"
+	"os"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -18,12 +21,18 @@ func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
 			config, _ := internal.NewRunConfig(v)
+
+			ctx := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
+				With().
+				Timestamp().
+				Logger().
+				Level(config.LogLevel).
+				WithContext(cmd.Context())
 
 			packageName := args[0]
 
-			fmt.Println(ctx, config, packageName)
+			zerolog.Ctx(ctx).Panic().Any("ctx", ctx).Any("config", config).Any("packageName", packageName).Msg("")
 		},
 	}
 
