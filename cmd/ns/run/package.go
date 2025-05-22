@@ -1,8 +1,6 @@
 package run
 
 import (
-	"os"
-
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,7 +19,7 @@ func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			config, _ := internal.NewRunConfig(v)
 
-			ctx := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
+			ctx := zerolog.New(internal.ConsoleLevelWriter{}).
 				With().
 				Timestamp().
 				Logger().
@@ -30,7 +28,7 @@ func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 
 			packageName := args[0]
 
-			zerolog.Ctx(ctx).Panic().Any("ctx", ctx).Any("config", config).Any("packageName", packageName).Msg("")
+			zerolog.Ctx(ctx).Panic().Interface("ctx", ctx).Interface("config", config).Str("packageName", packageName).Msg("")
 		},
 	}
 

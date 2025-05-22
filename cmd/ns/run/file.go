@@ -36,7 +36,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				zerolog.Ctx(ctx).Panic().Err(configErr).Msg("Error creating config")
 			}
 
-			ctx = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
+			ctx = zerolog.New(internal.ConsoleLevelWriter{}).
 				With().
 				Timestamp().
 				Logger().
@@ -57,7 +57,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 
 			if config.PollForMinutes <= 0 {
 				// TODO this should probably pretty-print the build response instead of relying on structured logs
-				zerolog.Ctx(ctx).Info().Any("Build Response", buildResponse).Msg("Succeeded")
+				zerolog.Ctx(ctx).Info().Interface("Build Response", buildResponse).Msg("Succeeded")
 				return
 			}
 
@@ -72,7 +72,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 			}
 
 			// TODO this should probably pretty-print the build response instead of relying on structured logs
-			zerolog.Ctx(ctx).Info().Any("Assessment", taskResponse).Msg("Succeeded")
+			zerolog.Ctx(ctx).Info().Interface("Assessment", taskResponse).Msg("Succeeded")
 		},
 	}
 
@@ -80,6 +80,8 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 }
 
 func submitFile(ctx context.Context, file *os.File, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostBuild2XX1, error) {
+	zerolog.Ctx(ctx).Debug().Msg("uploading file")
+
 	response, responseError := client.PostBuildWithBodyWithResponse(ctx, &platformapi.PostBuildParams{
 		AnalysisType: (*platformapi.PostBuildParamsAnalysisType)(&config.AnalysisType),
 		Group:        &config.Group,
@@ -88,6 +90,8 @@ func submitFile(ctx context.Context, file *os.File, config internal.RunConfig, c
 	if responseError != nil {
 		return nil, responseError
 	}
+
+	zerolog.Ctx(ctx).Debug().Int("status", response.StatusCode()).Msg("received http response")
 
 	if response.HTTPResponse.StatusCode >= 400 && response.HTTPResponse.StatusCode < 500 {
 		return nil, errors.New(*response.JSON4XX.Description)

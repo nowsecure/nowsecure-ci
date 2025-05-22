@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
+	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
 var rootCmd = &cobra.Command{
@@ -21,7 +22,7 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	ctx := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
+	ctx := zerolog.New(internal.ConsoleLevelWriter{}).
 		With().
 		Timestamp().
 		Logger().
