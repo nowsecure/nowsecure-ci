@@ -11,7 +11,7 @@ func NewRunPackageCommand() *cobra.Command {
 		Use:       "package [package-name]",
 		Short:     "Run an assessment for a pre-existing app by specifying package and platform",
 		Long:      ``,
-		ValidArgs: []string{"packageName"},
+		ValidArgs: []string{"package-name"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			packageName := args[0]
