@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"errors"
 
 	"github.com/rs/zerolog"
@@ -10,7 +11,7 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
-func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
+func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 	// packageCmd represents the package command
 	var packageCmd = &cobra.Command{
 		Use:       "package [package-name]",
