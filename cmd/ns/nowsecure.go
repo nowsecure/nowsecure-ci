@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -29,19 +28,34 @@ func Execute() {
 		Level(zerolog.FatalLevel).
 		WithContext(context.Background())
 
-	configureFlags(ctx)
-
-	err := rootCmd.ExecuteContext(ctx)
+	err := configureFlags(ctx)
 	if err != nil {
-		zerolog.Ctx(ctx).Panic().Err(err)
+		zerolog.Ctx(ctx).Panic().Err(err).Msg("")
+	}
+
+	err = rootCmd.ExecuteContext(ctx)
+	if err != nil {
+		zerolog.Ctx(ctx).Panic().Err(err).Msg("")
 	}
 }
 
-func configureFlags(ctx context.Context) {
-	configFile := ""
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $HOME/.ns-ci)")
+func configureFlags(ctx context.Context) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 
-	v := initViper(ctx, configFile)
+	defaultName := ".ns-ci"
+
+	configPath := filepath.Join(home, defaultName)
+
+	rootCmd.PersistentFlags().StringVar(&configPath, "config", configPath, "config file path")
+
+	v, err := initViper(configPath)
+
+	if err != nil {
+		return err
+	}
 
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
@@ -59,45 +73,32 @@ func configureFlags(ctx context.Context) {
 		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
 		v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")),
 	}
+
 	if errs := errors.Join(bindingErrors...); errs != nil {
-		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding root level flags")
+		return errs
 	}
 
 	rootCmd.AddCommand(run.NewRunCommand(ctx, v))
+
+	return nil
 }
 
-func initViper(ctx context.Context, configFile string) *viper.Viper {
+func initViper(configPath string) (*viper.Viper, error) {
 	v := viper.New()
 	v.SetEnvPrefix("NS")
 	v.AutomaticEnv()
 
-	if configFile != "" {
-		v.SetConfigFile(configFile)
-	} else {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		defaultName := ".ns-ci"
-
-		configPath := filepath.Join(home, defaultName)
-		if _, err := os.Stat(configPath); err != nil {
-			zerolog.Ctx(ctx).Info().Msgf("Config file '%s' does not exist. Continuing with default config", configPath)
-			return v
-		}
-
-		v.AddConfigPath(home)
-		v.SetConfigName(defaultName)
-		v.SetConfigType("yaml")
+	if _, err := os.Stat(configPath); err != nil {
+		return nil, err
 	}
 
-	zerolog.Ctx(ctx).Debug().Msgf("Using config file '%s'", v.ConfigFileUsed())
+	v.SetConfigFile(configPath)
+	v.SetConfigType("yaml")
 
 	err := v.ReadInConfig()
 	if err != nil {
-		zerolog.Ctx(ctx).Panic().Err(err).Msg("Failed to read in config file %s")
+		return nil, err
 	}
 
-	return v
+	return v, nil
 }
