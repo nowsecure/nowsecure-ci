@@ -85,7 +85,7 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 			Host:      host,
 			Token:     token,
 			Group:     group,
-			UserAgent: v.GetString("userAgent"),
+			UserAgent: v.GetString("user_agent"),
 			LogLevel:  logLevel,
 		},
 		AnalysisType:   v.GetString("analysis_type"),

@@ -51,7 +51,7 @@ func configureFlags(ctx context.Context) {
 
 	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
 
-	v.SetDefault("userAgent", "nowsecure-ci")
+	v.SetDefault("user_agent", "nowsecure-ci")
 
 	bindingErrors := []error{v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
 		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
