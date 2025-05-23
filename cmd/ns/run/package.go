@@ -1,6 +1,8 @@
 package run
 
 import (
+	"errors"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,15 +34,20 @@ func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 		},
 	}
 
-	var (
-		android bool
-		ios     bool
-	)
-	packageCmd.Flags().BoolVar(&ios, "ios", false, "app is for ios platform")
-	packageCmd.Flags().BoolVar(&android, "android", false, "app is for android platform")
+	packageCmd.Flags().Bool("ios", false, "app is for ios platform")
+	packageCmd.Flags().Bool("android", false, "app is for android platform")
 
 	packageCmd.MarkFlagsOneRequired("ios", "android")
 	packageCmd.MarkFlagsMutuallyExclusive("ios", "android")
+
+	bindingErrors := []error{
+		v.BindPFlag("platform_android", packageCmd.Flags().Lookup("android")),
+		v.BindPFlag("platform_ios", packageCmd.Flags().Lookup("ios")),
+	}
+
+	if errs := errors.Join(bindingErrors...); errs != nil {
+		zerolog.Ctx(c).Panic().Err(errs).Msg("Failed binding run level flags")
+	}
 
 	return packageCmd
 }

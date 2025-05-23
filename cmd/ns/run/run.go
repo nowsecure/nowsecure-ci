@@ -23,18 +23,20 @@ func NewRunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 	runCmd.PersistentFlags().Int("poll-for-minutes", 60, "polling max duration")
 	runCmd.PersistentFlags().Int("minimum-score", 0, "score threshold below which we exit code 1")
 
-	err1 := v.BindPFlag("analysis_type", runCmd.PersistentFlags().Lookup("analysis-type"))
-	err2 := v.BindPFlag("poll_for_minutes", runCmd.PersistentFlags().Lookup("poll-for-minutes"))
-	err3 := v.BindPFlag("minimum_score", runCmd.PersistentFlags().Lookup("minimum-score"))
+	bindingErrors := []error{
+		v.BindPFlag("analysis_type", runCmd.PersistentFlags().Lookup("analysis-type")),
+		v.BindPFlag("poll_for_minutes", runCmd.PersistentFlags().Lookup("poll-for-minutes")),
+		v.BindPFlag("minimum_score", runCmd.PersistentFlags().Lookup("minimum-score")),
+	}
 
-	if errs := errors.Join(err1, err2, err3); errs != nil {
+	if errs := errors.Join(bindingErrors...); errs != nil {
 		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding run level flags")
 	}
 
 	runCmd.AddCommand(
 		NewRunFileCommand(v),
 		NewRunIdCommand(v),
-		NewRunPackageCommand(v),
+		NewRunPackageCommand(ctx, v),
 	)
 
 	return runCmd
