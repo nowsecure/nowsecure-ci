@@ -87,18 +87,10 @@ func initViper(configPath string) (*viper.Viper, error) {
 	v := viper.New()
 	v.SetEnvPrefix("NS")
 	v.AutomaticEnv()
-
-	if _, err := os.Stat(configPath); err != nil {
-		return nil, err
-	}
-
 	v.SetConfigFile(configPath)
 	v.SetConfigType("yaml")
 
 	err := v.ReadInConfig()
-	if err != nil {
-		return nil, err
-	}
 
-	return v, nil
+	return v, err
 }
