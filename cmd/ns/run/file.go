@@ -49,7 +49,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error creating NowSecure API client")
 			}
 
-			buildResponse, err := submitFile(ctx, file, config, client)
+			buildResponse, err := uploadFile(ctx, file, config, client)
 
 			if err != nil {
 				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error submitting file for assessment")
@@ -79,7 +79,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 	return fileCmd
 }
 
-func submitFile(ctx context.Context, file *os.File, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostBuild2XX1, error) {
+func uploadFile(ctx context.Context, file *os.File, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostBuild2XX1, error) {
 	zerolog.Ctx(ctx).Debug().Msg("uploading file")
 
 	response, responseError := client.PostBuildWithBodyWithResponse(ctx, &platformapi.PostBuildParams{
