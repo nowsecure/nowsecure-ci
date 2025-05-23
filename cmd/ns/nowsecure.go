@@ -25,7 +25,7 @@ func Execute() {
 		With().
 		Timestamp().
 		Logger().
-		Level(zerolog.FatalLevel).
+		Level(zerolog.WarnLevel).
 		WithContext(context.Background())
 
 	err := configureFlags(ctx)
