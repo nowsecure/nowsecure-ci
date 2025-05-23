@@ -72,7 +72,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 			}
 
 			// TODO this should probably pretty-print the build response instead of relying on structured logs
-			zerolog.Ctx(ctx).Info().Interface("Assessment", taskResponse).Msg("Succeeded")
+			zerolog.Ctx(ctx).Info().Interface("Assessment", taskResponse.JSON2XX).Msg("Succeeded")
 		},
 	}
 
