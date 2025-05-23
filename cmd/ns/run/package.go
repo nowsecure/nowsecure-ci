@@ -22,11 +22,7 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			config, _ := internal.NewRunConfig(v)
 
-			ctx := zerolog.New(internal.ConsoleLevelWriter{}).
-				With().
-				Timestamp().
-				Logger().
-				Level(config.LogLevel).
+			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 
 			packageName := args[0]

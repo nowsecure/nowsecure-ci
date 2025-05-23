@@ -36,11 +36,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error creating config")
 			}
 
-			ctx = zerolog.New(internal.ConsoleLevelWriter{}).
-				With().
-				Timestamp().
-				Logger().
-				Level(config.LogLevel).
+			ctx = internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 
 			client, err := internal.ClientFromConfig(config, nil)

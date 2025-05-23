@@ -22,11 +22,7 @@ func NewRunIdCommand(v *viper.Viper) *cobra.Command {
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			config, _ := internal.NewRunConfig(v)
-			ctx := zerolog.New(internal.ConsoleLevelWriter{}).
-				With().
-				Timestamp().
-				Logger().
-				Level(config.LogLevel).
+			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 			appId = args[0]
 			zerolog.Ctx(ctx).Info().Str("AppId", appId).Msg("Package command called")
