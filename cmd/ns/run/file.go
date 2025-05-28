@@ -15,7 +15,6 @@ import (
 )
 
 func NewRunFileCommand(v *viper.Viper) *cobra.Command {
-	// fileCmd represents the file command
 	var fileCmd = &cobra.Command{
 		Use:       "file [./file-path]",
 		Short:     "Upload and run an assessment for a specified binary file",
