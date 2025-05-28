@@ -52,7 +52,7 @@ func configureFlags(ctx context.Context) error {
 		return err
 	}
 
-	defaultName := ".ns-ci"
+	defaultName := ".-ci"
 
 	configPath := filepath.Join(home, defaultName)
 
@@ -98,10 +98,16 @@ func initViper(configPath string) (*viper.Viper, error) {
 	v := viper.New()
 	v.SetEnvPrefix("NS")
 	v.AutomaticEnv()
-	v.SetConfigFile(configPath)
 	v.SetConfigType("yaml")
+	v.SetConfigFile(configPath)
 
-	err := v.ReadInConfig()
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+		} else {
+			return nil, err
+		}
+	}
 
-	return v, err
+	return v, nil
 }
