@@ -50,3 +50,4 @@ func NewConfig(v *viper.Viper) BaseConfig {
 		UserAgent: v.GetString("userAgent"),
 	}
 }
+
