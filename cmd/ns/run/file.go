@@ -4,9 +4,12 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
-func NewRunFileCommand() *cobra.Command {
+func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 	var fileCmd = &cobra.Command{
 		Use:       "file [./file-path]",
 		Short:     "Upload and run an assessment for a specified binary file",
@@ -15,6 +18,7 @@ func NewRunFileCommand() *cobra.Command {
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			file := args[0]
+			fmt.Println(internal.NewConfig(v))
 			fmt.Println("file called with file ", file)
 		},
 	}

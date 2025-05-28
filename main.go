@@ -1,6 +1,6 @@
 package main
 
-import "github.com/nowsecure/nowsecure-ci/cmd/ns"
+import cmd "github.com/nowsecure/nowsecure-ci/cmd/ns"
 
 func main() {
 	cmd.Execute()

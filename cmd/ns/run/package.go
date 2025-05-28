@@ -4,17 +4,22 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
-func NewRunPackageCommand() *cobra.Command {
+func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 	var packageCmd = &cobra.Command{
 		Use:       "package [package-name]",
 		Short:     "Run an assessment for a pre-existing app by specifying package and platform",
 		Long:      ``,
-		ValidArgs: []string{"package-name"},
+		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			packageName := args[0]
+			config := internal.NewConfig(v)
+			fmt.Println(config)
 			fmt.Println("package called with package ", packageName)
 		},
 	}
