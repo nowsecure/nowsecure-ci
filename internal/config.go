@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -72,12 +71,12 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 
 	platform := ""
 
-	if v.IsSet("platform") {
-		platform = strings.ToLower(v.GetString("platform"))
+	if v.IsSet("platform_android") {
+		platform = "android"
+	}
 
-		if platform != "ios" && platform != "android" {
-			return RunConfig{}, errors.New("must have valid platform")
-		}
+	if v.IsSet("platform_ios") {
+		platform = "ios"
 	}
 
 	return RunConfig{

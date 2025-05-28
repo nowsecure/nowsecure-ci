@@ -60,7 +60,24 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 			return nil, err
 		}
 
-		zerolog.Ctx(ctx).Debug().Int("StatusCode", resp.StatusCode()).Interface("TaskStatus", *resp.JSON2XX.TaskStatus).Msg("Assessment status response")
+		zerolog.Ctx(ctx).Debug().Int("status", resp.StatusCode()).Msg("Received http response")
+
+		// If the assessment is not found, there was likely an uncaught error in submission. No need to continue polling
+		if resp.HTTPResponse.StatusCode >= 400 && resp.HTTPResponse.StatusCode < 500 {
+			return nil, errors.New(*resp.JSON4XX.Description)
+		}
+
+		// If there's an API error, it seems prudent to continue polling
+		if resp.HTTPResponse.StatusCode >= 500 {
+			zerolog.Ctx(ctx).Warn().
+				Int("status", resp.StatusCode()).
+				Any("message", resp.JSON5XX.Message).
+				Any("name", resp.JSON5XX.Name).
+				Msg("Received 5XX error from Nowsecure API")
+			continue
+		}
+
+		zerolog.Ctx(ctx).Debug().Any("task status", resp.JSON2XX.TaskStatus).Msg("Successfully polled for task status")
 
 		var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
 		var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
