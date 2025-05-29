@@ -59,8 +59,7 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.PersistentFlags().StringVar(&configPath, "config", configPath, "config file path")
 
 	v, err := initViper(configPath)
-
-	if err != nil {
+	if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 		return err
 	}
 
@@ -100,14 +99,6 @@ func initViper(configPath string) (*viper.Viper, error) {
 	v.AutomaticEnv()
 	v.SetConfigType("yaml")
 	v.SetConfigFile(configPath)
-
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found; ignore error if desired
-		} else {
-			return nil, err
-		}
-	}
-
-	return v, nil
+	err := viper.ReadInConfig()
+	return v, err
 }
