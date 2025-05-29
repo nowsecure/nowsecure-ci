@@ -52,7 +52,7 @@ func configureFlags(ctx context.Context) error {
 		return err
 	}
 
-	defaultName := ".-ci"
+	defaultName := ".ns-ci"
 
 	configPath := filepath.Join(home, defaultName)
 
