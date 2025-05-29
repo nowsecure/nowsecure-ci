@@ -1,15 +1,17 @@
 package run
 
 import (
-	"fmt"
+	"context"
+	"errors"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
-func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
+func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 	var packageCmd = &cobra.Command{
 		Use:       "package [package-name]",
 		Short:     "Run an assessment for a pre-existing app by specifying package and platform",
@@ -17,22 +19,31 @@ func NewRunPackageCommand(v *viper.Viper) *cobra.Command {
 		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			config, _ := internal.NewRunConfig(v)
+
+			ctx := internal.LoggerWithLevel(config.LogLevel).
+				WithContext(cmd.Context())
+
 			packageName := args[0]
-			config := internal.NewConfig(v)
-			fmt.Println(config)
-			fmt.Println("package called with package ", packageName)
+
+			zerolog.Ctx(ctx).Panic().Interface("ctx", ctx).Interface("config", config).Str("packageName", packageName).Msg("")
 		},
 	}
-	var (
-		android bool
-		ios     bool
-	)
 
-	packageCmd.Flags().BoolVar(&ios, "ios", false, "app is for ios platform")
-	packageCmd.Flags().BoolVar(&android, "android", false, "app is for android platform")
+	packageCmd.Flags().Bool("ios", false, "app is for ios platform")
+	packageCmd.Flags().Bool("android", false, "app is for android platform")
 
 	packageCmd.MarkFlagsOneRequired("ios", "android")
 	packageCmd.MarkFlagsMutuallyExclusive("ios", "android")
+
+	bindingErrors := []error{
+		v.BindPFlag("platform_android", packageCmd.Flags().Lookup("android")),
+		v.BindPFlag("platform_ios", packageCmd.Flags().Lookup("ios")),
+	}
+
+	if errs := errors.Join(bindingErrors...); errs != nil {
+		zerolog.Ctx(c).Panic().Err(errs).Msg("Failed binding run level flags")
+	}
 
 	return packageCmd
 }

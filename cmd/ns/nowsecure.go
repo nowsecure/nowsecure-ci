@@ -1,15 +1,17 @@
 package cmd
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
+	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
 var rootCmd = &cobra.Command{
@@ -19,65 +21,76 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	err := rootCmd.Execute()
+	ctx := zerolog.New(internal.ConsoleLevelWriter{}).
+		With().
+		Timestamp().
+		Logger().
+		Level(zerolog.WarnLevel).
+		WithContext(context.Background())
+
+	err := configureFlags(ctx)
 	if err != nil {
-		os.Exit(1)
+		zerolog.Ctx(ctx).Panic().Err(err).Msg("")
+	}
+
+	err = rootCmd.ExecuteContext(ctx)
+	if err != nil {
+		zerolog.Ctx(ctx).Panic().Err(err).Msg("")
 	}
 }
 
-func init() {
-	configFile := ""
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $HOME/.ns-ci)")
+func configureFlags(ctx context.Context) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 
-	v := viperWithFile(configFile)
+	defaultName := ".ns-ci"
+
+	configPath := filepath.Join(home, defaultName)
+
+	rootCmd.PersistentFlags().StringVar(&configPath, "config", configPath, "config file path")
+
+	v, err := initViper(configPath)
+
+	if err != nil {
+		return err
+	}
 
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
 	rootCmd.PersistentFlags().StringP("group", "g", "", "group with which to run assessments")
+	rootCmd.PersistentFlags().StringP("log-level", "", "info", "logging level")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
 
-	v.SetDefault("userAgent", "nowsecure-ci")
-	err1 := v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host"))
-	err2 := v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token"))
-	err3 := v.BindPFlag("group", rootCmd.PersistentFlags().Lookup("group"))
+	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
 
-	if errs := errors.Join(err1, err2, err3); errs != nil {
-		fmt.Println(errs)
-		os.Exit(1)
+	v.SetDefault("user_agent", "nowsecure-ci")
+
+	bindingErrors := []error{v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
+		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
+		v.BindPFlag("group", rootCmd.PersistentFlags().Lookup("group")),
+		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
+		v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")),
 	}
 
-	rootCmd.AddCommand(run.NewRunCommand(v))
+	if errs := errors.Join(bindingErrors...); errs != nil {
+		return errs
+	}
+
+	rootCmd.AddCommand(run.NewRunCommand(ctx, v))
+
+	return nil
 }
 
-func viperWithFile(configFile string) *viper.Viper {
+func initViper(configPath string) (*viper.Viper, error) {
 	v := viper.New()
+	v.SetEnvPrefix("NS")
 	v.AutomaticEnv()
-
-	if configFile != "" {
-		v.SetConfigFile(configFile)
-	} else {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		defaultName := ".ns-ci"
-
-		if _, err := os.Stat(filepath.Join(home, defaultName)); err != nil {
-			return v
-		}
-
-		v.AddConfigPath(home)
-		v.SetConfigName(defaultName)
-		v.SetConfigType("yaml")
-	}
-
-	fmt.Println(v.ConfigFileUsed())
+	v.SetConfigFile(configPath)
+	v.SetConfigType("yaml")
 
 	err := v.ReadInConfig()
-	if err != nil {
-		fmt.Println("Can't read config:", err)
-		os.Exit(1)
-	}
 
-	return v
+	return v, err
 }

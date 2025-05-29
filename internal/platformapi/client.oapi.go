@@ -8369,7 +8369,8 @@ type PostBuild2XX1 struct {
 	} `json:"status"`
 
 	// Task An integer identifying the underlying analysis tasks associated with this assessment.
-	Task float32 `json:"task"`
+	// TODO: Comment on upstream issue on float64 defaults
+	Task float64 `json:"task"`
 
 	// TaskErrorCode The error code describing the failure if an assessment failed.
 	TaskErrorCode *string `json:"task_error_code"`
