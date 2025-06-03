@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"os"
-	"path/filepath"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -47,21 +46,18 @@ func Execute() {
 }
 
 func configureFlags(ctx context.Context) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
+	v := viper.New()
+	v.SetEnvPrefix("NS")
+	v.AutomaticEnv()
+	v.SetConfigType("yaml")
+	v.SetConfigName(".ns-ci")
 
-	defaultName := ".ns-ci"
-
-	configPath := filepath.Join(home, defaultName)
-
-	rootCmd.PersistentFlags().StringVar(&configPath, "config", configPath, "config file path")
-
-	v, err := initViper(configPath)
-	if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-		return err
-	}
+	cobra.OnInitialize(func() {
+		err := readConfigFile(v)
+		if err != nil {
+			zerolog.Ctx(ctx).Debug().Err(err).Msg("Error reading from config file")
+		}
+	})
 
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
@@ -93,12 +89,12 @@ func configureFlags(ctx context.Context) error {
 	return nil
 }
 
-func initViper(configPath string) (*viper.Viper, error) {
-	v := viper.New()
-	v.SetEnvPrefix("NS")
-	v.AutomaticEnv()
-	v.SetConfigType("yaml")
-	v.SetConfigFile(configPath)
-	err := viper.ReadInConfig()
-	return v, err
+func readConfigFile(v *viper.Viper) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	v.AddConfigPath(home)
+	err = v.ReadInConfig()
+	return err
 }
