@@ -40,7 +40,7 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 			}
 
 			if config.PollForMinutes <= 0 {
-				zerolog.Ctx(ctx).Info().Any("Assessment response", response).Msg("Succeeded")
+				zerolog.Ctx(ctx).Info().Any("Assessment response", response.JSON2XX).Msg("Succeeded")
 				return
 			}
 
