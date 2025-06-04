@@ -3840,13 +3840,11 @@ func NewGetAppRequest(server string, params *GetAppParams) (*http.Request, error
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
-	fmt.Println(queryURL.String())
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(req.Header)
 	return req, nil
 }
 

@@ -19,41 +19,40 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 		Long:      ``,
 		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			config, _ := internal.NewRunConfig(v)
-
 			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
+			log := zerolog.Ctx(ctx)
 
 			packageName := args[0]
 
 			client, err := internal.ClientFromConfig(config, nil)
 			if err != nil {
-				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error creating NowSecure API client")
+				log.Panic().Err(err).Msg("Error creating NowSecure API client")
 			}
-			zerolog.Ctx(ctx).Debug().Msg("Client created")
+			log.Debug().Msg("Client created")
 
-			response, assessmentErr := triggerAssessment(ctx, packageName, config, client)
-
-			if assessmentErr != nil {
-				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error triggering assessment")
+			response, err := triggerAssessment(ctx, packageName, config, client)
+			if err != nil {
+				return err
 			}
 
 			if config.PollForMinutes <= 0 {
-				zerolog.Ctx(ctx).Info().Any("Assessment response", response.JSON2XX).Msg("Succeeded")
-				return
+				log.Info().Any("Assessment response", response.JSON2XX).Msg("Succeeded")
+				return nil
 			}
 
-			taskResponse, taskErr := pollForResults(ctx, client, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task), config.PollForMinutes)
-
-			if taskErr != nil {
-				zerolog.Ctx(ctx).Panic().Err(taskErr).Msg("Error while polling for assessment results")
+			taskResponse, err := pollForResults(ctx, client, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task), config.PollForMinutes)
+			if err != nil {
+				return err
 			}
 
 			isAboveMinimum(taskResponse, config.MinimumScore)
 
 			// TODO this should probably pretty-print the build response instead of relying on structured logs
-			zerolog.Ctx(ctx).Info().Any("Assessment", taskResponse).Msg("Succeeded")
+			log.Info().Any("Assessment", taskResponse).Msg("Succeeded")
+			return nil
 		},
 	}
 
@@ -76,8 +75,9 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 }
 
 func triggerAssessment(ctx context.Context, packageName string, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostAppPlatformPackageAssessmentResponse, error) {
-	zerolog.Ctx(ctx).Debug().Str("package", packageName).Str("platform", config.Platform).Msg("Triggering assessment")
-	response, responseError := client.PostAppPlatformPackageAssessmentWithResponse(
+	log := zerolog.Ctx(ctx)
+	log.Debug().Str("package", packageName).Str("platform", config.Platform).Msg("Triggering assessment")
+	response, err := client.PostAppPlatformPackageAssessmentWithResponse(
 		ctx,
 		platformapi.PostAppPlatformPackageAssessmentParamsPlatform(config.Platform),
 		packageName,
@@ -85,22 +85,21 @@ func triggerAssessment(ctx context.Context, packageName string, config internal.
 			AnalysisType: (*platformapi.PostAppPlatformPackageAssessmentParamsAnalysisType)(&config.AnalysisType),
 		},
 	)
-
-	if responseError != nil {
-		return nil, responseError
+	if err != nil {
+		return nil, err
 	}
 
 	if response.HTTPResponse.StatusCode >= 400 && response.HTTPResponse.StatusCode < 500 {
-		zerolog.Ctx(ctx).Debug().Any("Response", response.JSON4XX).Msg("Bad Request")
-		return nil, errors.New(*response.JSON4XX.Message)
+		log.Debug().Any("Response", response.JSON4XX).Msg("Bad Request")
+		return nil, response.JSON4XX
 	}
 
 	if response.HTTPResponse.StatusCode >= 500 {
-		zerolog.Ctx(ctx).Debug().Any("Response", response.JSON5XX).Msg("Server error")
-		return nil, errors.New(*response.JSON5XX.Message)
+		log.Debug().Any("Response", response.JSON5XX).Msg("Server error")
+		return nil, response.JSON5XX
 	}
 
-	zerolog.Ctx(ctx).Debug().Any("Response", response.JSON2XX).Msg("Successfully triggered assessment")
+	log.Debug().Any("Response", response.JSON2XX).Msg("Successfully triggered assessment")
 
 	return response, nil
 }

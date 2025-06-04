@@ -12,12 +12,15 @@ import (
 
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
 	"github.com/nowsecure/nowsecure-ci/internal"
+	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "ns",
-	Short: "NowSecure command line tool to interact with NowSecure Platform",
-	Long:  ``,
+	Use:           "ns",
+	Short:         "NowSecure command line tool to interact with NowSecure Platform",
+	Long:          ``,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 func Execute() {
@@ -35,7 +38,11 @@ func Execute() {
 
 	err = rootCmd.ExecuteContext(ctx)
 	if err != nil {
-		zerolog.Ctx(ctx).Panic().Err(err).Msg("")
+		if reqErr, ok := err.(*platformapi.LabRouteError); ok {
+			zerolog.Ctx(ctx).Error().Any("LabRouteError", reqErr).Msg("API Error Response")
+			os.Exit(reqErr.ExitCode())
+		}
+		zerolog.Ctx(ctx).Panic().Msg(err.Error())
 	}
 }
 

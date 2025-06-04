@@ -64,15 +64,13 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 
 		// If the assessment is not found, there was likely an uncaught error in submission. No need to continue polling
 		if resp.HTTPResponse.StatusCode >= 400 && resp.HTTPResponse.StatusCode < 500 {
-			return nil, errors.New(*resp.JSON4XX.Description)
+			return nil, resp.JSON4XX
 		}
 
 		// If there's an API error, it seems prudent to continue polling
 		if resp.HTTPResponse.StatusCode >= 500 {
 			zerolog.Ctx(ctx).Warn().
-				Int("status", resp.StatusCode()).
-				Any("message", resp.JSON5XX.Message).
-				Any("name", resp.JSON5XX.Name).
+				Any("LabRouteError", resp.JSON5XX).
 				Msg("Received 5XX error from Nowsecure API")
 			continue
 		}
