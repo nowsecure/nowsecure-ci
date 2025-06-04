@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/rs/zerolog"
@@ -27,22 +28,20 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 			fileName := args[0]
 			file, err := os.Open(fileName)
 			if err != nil {
-				log.Panic().Err(err).Msgf("Cannot open file %s", fileName)
+				return err
 			}
 
 			config, err := internal.NewRunConfig(v)
-
 			if err != nil {
-				log.Panic().Err(err).Msg("Error creating config")
+				return err
 			}
 
 			ctx = internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 
 			client, err := internal.ClientFromConfig(config, nil)
-
 			if err != nil {
-				log.Panic().Err(err).Msg("Error creating NowSecure API client")
+				return err
 			}
 
 			buildResponse, err := uploadFile(ctx, file, config, client)
@@ -62,7 +61,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {
-				log.Panic().Msgf("The score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
+				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
 			}
 
 			// TODO this should probably pretty-print the build response instead of relying on structured logs
