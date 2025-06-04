@@ -3,7 +3,6 @@ package run
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 
@@ -88,11 +87,11 @@ func uploadFile(ctx context.Context, file *os.File, config internal.RunConfig, c
 	zerolog.Ctx(ctx).Debug().Int("status", response.StatusCode()).Msg("Received http response")
 
 	if response.HTTPResponse.StatusCode >= 400 && response.HTTPResponse.StatusCode < 500 {
-		return nil, errors.New(*response.JSON4XX.Description)
+		return nil, response.JSON4XX
 	}
 
 	if response.HTTPResponse.StatusCode >= 500 {
-		return nil, errors.New(*response.JSON5XX.Description)
+		return nil, response.JSON5XX
 	}
 
 	buildResponse := platformapi.PostBuild2XX1{}
