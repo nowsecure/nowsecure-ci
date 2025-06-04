@@ -12,7 +12,7 @@ import (
 
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
 	"github.com/nowsecure/nowsecure-ci/internal"
-	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
+	nserrors "github.com/nowsecure/nowsecure-ci/internal/errors"
 )
 
 var rootCmd = &cobra.Command{
@@ -38,11 +38,11 @@ func Execute() {
 
 	err = rootCmd.ExecuteContext(ctx)
 	if err != nil {
-		if reqErr, ok := err.(*platformapi.LabRouteError); ok {
+		if reqErr, ok := err.(nserrors.CIError); ok {
 			zerolog.Ctx(ctx).Error().Any("LabRouteError", reqErr).Msg("API Error Response")
 			os.Exit(reqErr.ExitCode())
 		}
-		zerolog.Ctx(ctx).Panic().Msg(err.Error())
+		zerolog.Ctx(ctx).Fatal().Msg(err.Error())
 	}
 }
 
