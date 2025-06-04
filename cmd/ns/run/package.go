@@ -77,7 +77,7 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 }
 
 func triggerAssessment(ctx context.Context, packageName string, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostAppPlatformPackageAssessmentResponse, error) {
-	zerolog.Ctx(ctx).Debug().Str("pakcage", packageName).Str("platform", config.Platform).Msg("Triggering assessment")
+	zerolog.Ctx(ctx).Debug().Str("package", packageName).Str("platform", config.Platform).Msg("Triggering assessment")
 	response, responseError := client.PostAppPlatformPackageAssessmentWithResponse(
 		ctx,
 		platformapi.PostAppPlatformPackageAssessmentParamsPlatform(config.Platform),
