@@ -29,7 +29,7 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 
 			client, err := internal.ClientFromConfig(config, nil)
 			if err != nil {
-				log.Panic().Err(err).Msg("Error creating NowSecure API client")
+				return err
 			}
 			log.Debug().Msg("Client created")
 

@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -91,7 +92,7 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 		time.Sleep(1 * time.Minute)
 	}
 
-	return nil, errors.New("assessment not completed")
+	return nil, fmt.Errorf("assessment took longer than configured polling interval (%d minutes)", minutes)
 }
 
 func isAboveMinimum(taskResponse *platformapi.GetAppPlatformPackageAssessmentTaskResponse, threshold int) bool {
