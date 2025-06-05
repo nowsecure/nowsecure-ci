@@ -68,6 +68,8 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
 	rootCmd.PersistentFlags().StringP("group", "g", "", "group with which to run assessments")
 	rootCmd.PersistentFlags().StringP("log-level", "", "info", "logging level")
+	rootCmd.PersistentFlags().StringP("output", "p", "", "write  output to <file> instead of stdout.")
+	rootCmd.PersistentFlags().StringP("output-format", "", "json", "write  output in specified format.")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
 
 	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
@@ -77,10 +79,11 @@ func configureFlags(ctx context.Context) error {
 	bindingErrors := []error{v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
 		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
 		v.BindPFlag("group", rootCmd.PersistentFlags().Lookup("group")),
+		v.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")),
+		v.BindPFlag("output_format", rootCmd.PersistentFlags().Lookup("output-format")),
 		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
 		v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")),
 	}
-
 	if errs := errors.Join(bindingErrors...); errs != nil {
 		return errs
 	}

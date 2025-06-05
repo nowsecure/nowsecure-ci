@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
+	"github.com/nowsecure/nowsecure-ci/internal/output"
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
@@ -26,11 +28,13 @@ func ClientFromConfig(config RunConfig, doer platformapi.HttpRequestDoer) (*plat
 }
 
 type BaseConfig struct {
-	Host      string
-	Token     string
-	Group     uuid.UUID
-	UserAgent string
-	LogLevel  zerolog.Level
+	Host         string
+	Token        string
+	Group        uuid.UUID
+	UserAgent    string
+	LogLevel     zerolog.Level
+	Output       string
+	OutputFormat output.Formats
 }
 
 type RunConfig struct {
@@ -50,7 +54,6 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 	}
 
 	logLevel, err := zerolog.ParseLevel(v.GetString("log_level"))
-
 	if err != nil {
 		return RunConfig{}, err
 	}
@@ -63,7 +66,6 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 	if v.IsSet("group") {
 		var err error
 		group, err = uuid.Parse(v.GetString("group"))
-
 		if err != nil {
 			return RunConfig{}, errors.New("must have valid group")
 		}
@@ -79,13 +81,25 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 		platform = "ios"
 	}
 
+	var format output.Formats
+	if v.IsSet("output_format") {
+		switch strings.ToLower(v.GetString("output_format")) {
+		case "json":
+			format = output.JSON
+		default:
+			return RunConfig{}, errors.New("must have valid output format")
+		}
+	}
+
 	return RunConfig{
 		BaseConfig: BaseConfig{
-			Host:      host,
-			Token:     token,
-			Group:     group,
-			UserAgent: v.GetString("user_agent"),
-			LogLevel:  logLevel,
+			Host:         host,
+			Token:        token,
+			Group:        group,
+			UserAgent:    v.GetString("user_agent"),
+			LogLevel:     logLevel,
+			Output:       v.GetString("output"),
+			OutputFormat: format,
 		},
 		AnalysisType:   v.GetString("analysis_type"),
 		PollForMinutes: v.GetInt("poll_for_minutes"),

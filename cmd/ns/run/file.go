@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal"
+	"github.com/nowsecure/nowsecure-ci/internal/output"
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
@@ -43,15 +44,21 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				return err
 			}
 
+			w, err := output.New(config.Output, config.OutputFormat)
+			if err != nil {
+				zerolog.Ctx(ctx).Panic().Err(err).Msg("Failed to create writer")
+			}
+			defer w.Close()
+
 			buildResponse, err := uploadFile(ctx, file, config, client)
 			if err != nil {
 				return err
 			}
 
 			if config.PollForMinutes <= 0 {
-				// TODO this should probably pretty-print the build response instead of relying on structured logs
-				log.Info().Interface("Build Response", buildResponse).Msg("Succeeded")
-				return nil
+				log.Info().Msg("Succeeded")
+				err = w.Write(buildResponse)
+				return err
 			}
 
 			taskResponse, err := pollForResults(ctx, client, buildResponse.Package, buildResponse.Platform, buildResponse.Task, config.PollForMinutes)
@@ -63,9 +70,9 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
 			}
 
-			// TODO this should probably pretty-print the build response instead of relying on structured logs
 			log.Info().Interface("Assessment", taskResponse.JSON2XX).Msg("Succeeded")
-			return nil
+
+			return w.Write(taskResponse.JSON2XX)
 		},
 	}
 
@@ -75,13 +82,12 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 func uploadFile(ctx context.Context, file *os.File, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostBuild2XX1, error) {
 	zerolog.Ctx(ctx).Debug().Msg("uploading file")
 
-	response, responseError := client.PostBuildWithBodyWithResponse(ctx, &platformapi.PostBuildParams{
+	response, err := client.PostBuildWithBodyWithResponse(ctx, &platformapi.PostBuildParams{
 		AnalysisType: (*platformapi.PostBuildParamsAnalysisType)(&config.AnalysisType),
 		Group:        &config.Group,
 	}, "application/octet-stream", file)
-
-	if responseError != nil {
-		return nil, responseError
+	if err != nil {
+		return nil, err
 	}
 
 	zerolog.Ctx(ctx).Debug().Int("status", response.StatusCode()).Msg("Received http response")
@@ -96,7 +102,7 @@ func uploadFile(ctx context.Context, file *os.File, config internal.RunConfig, c
 
 	buildResponse := platformapi.PostBuild2XX1{}
 
-	err := json.Unmarshal(response.Body, &buildResponse)
+	err = json.Unmarshal(response.Body, &buildResponse)
 
 	return &buildResponse, err
 }
