@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -50,7 +51,9 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 				zerolog.Ctx(ctx).Panic().Err(taskErr).Msg("Error while polling for assessment results")
 			}
 
-			isAboveMinimum(taskResponse, config.MinimumScore)
+			if !isAboveMinimum(taskResponse, config.MinimumScore) {
+				zerolog.Ctx(ctx).Panic().Err(err).Msg(fmt.Sprintf("the score %.2f is less than the required minimum %d"))
+			}
 
 			// TODO this should probably pretty-print the build response instead of relying on structured logs
 			zerolog.Ctx(ctx).Info().Any("Assessment", taskResponse).Msg("Succeeded")
