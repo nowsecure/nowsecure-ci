@@ -3,12 +3,14 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal"
+	"github.com/nowsecure/nowsecure-ci/internal/output"
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
@@ -27,9 +29,15 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 
 			packageName := args[0]
 
+			w, err := output.New(config.Output, config.OutputFormat)
+			if err != nil {
+				return err
+			}
+			defer w.Close()
+
 			client, err := internal.ClientFromConfig(config, nil)
 			if err != nil {
-				log.Panic().Err(err).Msg("Error creating NowSecure API client")
+				return err
 			}
 			log.Debug().Msg("Client created")
 
@@ -39,8 +47,8 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 			}
 
 			if config.PollForMinutes <= 0 {
-				log.Info().Any("Assessment response", response.JSON2XX).Msg("Succeeded")
-				return nil
+				log.Info().Msg("Succeeded")
+				return w.Write(response.JSON2XX)
 			}
 
 			taskResponse, err := pollForResults(ctx, client, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task), config.PollForMinutes)
@@ -48,11 +56,15 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 				return err
 			}
 
-			isAboveMinimum(taskResponse, config.MinimumScore)
+			if !isAboveMinimum(taskResponse, config.MinimumScore) {
+				if err := w.Write(taskResponse.JSON2XX); err != nil {
+					return err
+				}
+				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
+			}
 
-			// TODO this should probably pretty-print the build response instead of relying on structured logs
-			log.Info().Any("Assessment", taskResponse).Msg("Succeeded")
-			return nil
+			log.Info().Msg("Succeeded")
+			return w.Write(taskResponse.JSON2XX)
 		},
 	}
 
