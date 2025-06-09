@@ -70,8 +70,6 @@ func TriggerAssessment(ctx context.Context, client *ClientWithResponses, p Trigg
 		return nil, response.JSON5XX
 	}
 
-	log.Debug().Msg("Successfully triggered assessment")
-
 	return response, nil
 }
 
@@ -82,8 +80,6 @@ type UploadFileParams struct {
 }
 
 func UploadFile(ctx context.Context, client *ClientWithResponses, p UploadFileParams) (*PostBuild2XX1, error) {
-	zerolog.Ctx(ctx).Debug().Msg("Uploading file")
-
 	response, err := client.PostBuildWithBodyWithResponse(ctx, &PostBuildParams{
 		AnalysisType:            (*PostBuildParamsAnalysisType)(&p.AnalysisType),
 		Group:                   &p.Group,
