@@ -23,7 +23,7 @@ func (ld *LoggingDoer) Do(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func ClientFromConfig(config internal.RunConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
+func ClientFromConfig(config *internal.RunConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
 	if doer == nil {
 		doer = &LoggingDoer{&http.Client{}}
 	}

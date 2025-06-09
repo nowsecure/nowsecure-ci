@@ -29,17 +29,17 @@ type RunConfig struct {
 	Platform       string
 }
 
-func NewRunConfig(v *viper.Viper) (RunConfig, error) {
+func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 	host := v.GetString("host")
 	token := v.GetString("token")
 
 	if host == "" || token == "" {
-		return RunConfig{}, errors.New("host and token must both be specified either in a config file, or through a flag")
+		return nil, errors.New("host and token must both be specified either in a config file, or through a flag")
 	}
 
 	logLevel, err := zerolog.ParseLevel(v.GetString("log_level"))
 	if err != nil {
-		return RunConfig{}, err
+		return nil, err
 	}
 
 	if v.GetBool("verbose") {
@@ -51,7 +51,7 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 		var err error
 		group, err = uuid.Parse(v.GetString("group"))
 		if err != nil {
-			return RunConfig{}, errors.New("must have valid group")
+			return nil, errors.New("must have valid group")
 		}
 	}
 
@@ -71,11 +71,11 @@ func NewRunConfig(v *viper.Viper) (RunConfig, error) {
 		case "json":
 			format = output.JSON
 		default:
-			return RunConfig{}, errors.New("must have valid output format")
+			return nil, errors.New("must have valid output format")
 		}
 	}
 
-	return RunConfig{
+	return &RunConfig{
 		BaseConfig: BaseConfig{
 			Host:         host,
 			Token:        token,
