@@ -66,17 +66,14 @@ func configureFlags(ctx context.Context) error {
 
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
-	rootCmd.PersistentFlags().StringP("group", "g", "", "group with which to run assessments")
+	rootCmd.PersistentFlags().StringP("group", "g", "", "group uuid with which to run assessments")
+	rootCmd.PersistentFlags().StringP("group-name", "", "", "group name with which to run assessments")
 	rootCmd.PersistentFlags().StringP("log-level", "", "info", "logging level")
 	rootCmd.PersistentFlags().StringP("output", "p", "", "write  output to <file> instead of stdout.")
 	rootCmd.PersistentFlags().StringP("output-format", "", "json", "write  output in specified format.")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
-
-	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
-
-	v.SetDefault("user_agent", "nowsecure-ci")
-
-	bindingErrors := []error{v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
+	bindingErrors := []error{
+		v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
 		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
 		v.BindPFlag("group", rootCmd.PersistentFlags().Lookup("group")),
 		v.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")),
@@ -88,7 +85,11 @@ func configureFlags(ctx context.Context) error {
 		return errs
 	}
 
-	rootCmd.AddCommand(run.NewRunCommand(ctx, v))
+	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
+
+	v.SetDefault("user_agent", "nowsecure-ci")
+
+	rootCmd.AddCommand(run.RunCommand(ctx, v))
 
 	return nil
 }

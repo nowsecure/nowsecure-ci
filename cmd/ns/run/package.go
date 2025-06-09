@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -14,7 +15,7 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
+func RunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 	var packageCmd = &cobra.Command{
 		Use:       "package [package-name]",
 		Short:     "Run an assessment for a pre-existing app by specifying package and platform",
@@ -35,13 +36,18 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 			}
 			defer w.Close()
 
-			client, err := internal.ClientFromConfig(config, nil)
+			client, err := platformapi.ClientFromConfig(config, nil)
 			if err != nil {
 				return err
 			}
 			log.Debug().Msg("Client created")
 
-			response, err := triggerAssessment(ctx, packageName, config, client)
+			response, err := platformapi.TriggerAssessment(ctx, client, platformapi.TriggerAssessmentParams{
+				PackageName:  packageName,
+				Group:        config.Group,
+				AnalysisType: config.AnalysisType,
+				Platform:     config.Platform,
+			})
 			if err != nil {
 				return err
 			}
@@ -51,7 +57,9 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 				return w.Write(response.JSON2XX)
 			}
 
-			taskResponse, err := pollForResults(ctx, client, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task), config.PollForMinutes)
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
+			defer cancel()
+			taskResponse, err := pollForResults(ctx, client, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task), config.PollForMinutes)
 			if err != nil {
 				return err
 			}
@@ -84,34 +92,4 @@ func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 	}
 
 	return packageCmd
-}
-
-func triggerAssessment(ctx context.Context, packageName string, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostAppPlatformPackageAssessmentResponse, error) {
-	log := zerolog.Ctx(ctx)
-	log.Debug().Str("package", packageName).Str("platform", config.Platform).Msg("Triggering assessment")
-	response, err := client.PostAppPlatformPackageAssessmentWithResponse(
-		ctx,
-		platformapi.PostAppPlatformPackageAssessmentParamsPlatform(config.Platform),
-		packageName,
-		&platformapi.PostAppPlatformPackageAssessmentParams{
-			AnalysisType: (*platformapi.PostAppPlatformPackageAssessmentParamsAnalysisType)(&config.AnalysisType),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.HTTPResponse.StatusCode >= 400 && response.HTTPResponse.StatusCode < 500 {
-		log.Debug().Any("Response", response.JSON4XX).Msg("Bad Request")
-		return nil, response.JSON4XX
-	}
-
-	if response.HTTPResponse.StatusCode >= 500 {
-		log.Debug().Any("Response", response.JSON5XX).Msg("Server error")
-		return nil, response.JSON5XX
-	}
-
-	log.Debug().Any("Response", response.JSON2XX).Msg("Successfully triggered assessment")
-
-	return response, nil
 }

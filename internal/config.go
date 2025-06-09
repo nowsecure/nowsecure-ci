@@ -1,9 +1,7 @@
 package internal
 
 import (
-	"context"
 	"errors"
-	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
@@ -11,21 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal/output"
-	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
-
-func ClientFromConfig(config RunConfig, doer platformapi.HttpRequestDoer) (*platformapi.ClientWithResponses, error) {
-	if doer == nil {
-		doer = &http.Client{}
-	}
-
-	return platformapi.NewClientWithResponses(config.Host,
-		platformapi.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
-			req.Header.Add("User-Agent", config.UserAgent)
-			req.Header.Add("Authorization", "Bearer "+config.Token)
-			return nil
-		}), platformapi.WithHTTPClient(doer))
-}
 
 type BaseConfig struct {
 	Host         string

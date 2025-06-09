@@ -2,9 +2,9 @@ package run
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -15,7 +15,7 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-func NewRunFileCommand(v *viper.Viper) *cobra.Command {
+func RunFileCommand(v *viper.Viper) *cobra.Command {
 	var fileCmd = &cobra.Command{
 		Use:       "file [./file-path]",
 		Short:     "Upload and run an assessment for a specified binary file",
@@ -39,7 +39,7 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 			ctx = internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 
-			client, err := internal.ClientFromConfig(config, nil)
+			client, err := platformapi.ClientFromConfig(config, nil)
 			if err != nil {
 				return err
 			}
@@ -50,7 +50,11 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 			}
 			defer w.Close()
 
-			buildResponse, err := uploadFile(ctx, file, config, client)
+			buildResponse, err := platformapi.UploadFile(ctx, client, platformapi.UploadFileParams{
+				AnalysisType: config.AnalysisType,
+				Group:        config.Group,
+				File:         file,
+			})
 			if err != nil {
 				return err
 			}
@@ -61,7 +65,9 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 				return err
 			}
 
-			taskResponse, err := pollForResults(ctx, client, buildResponse.Package, buildResponse.Platform, buildResponse.Task, config.PollForMinutes)
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
+			defer cancel()
+			taskResponse, err := pollForResults(ctx, client, config.Group, buildResponse.Package, buildResponse.Platform, buildResponse.Task, config.PollForMinutes)
 			if err != nil {
 				return err
 			}
@@ -77,32 +83,4 @@ func NewRunFileCommand(v *viper.Viper) *cobra.Command {
 	}
 
 	return fileCmd
-}
-
-func uploadFile(ctx context.Context, file *os.File, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostBuild2XX1, error) {
-	zerolog.Ctx(ctx).Debug().Msg("uploading file")
-
-	response, err := client.PostBuildWithBodyWithResponse(ctx, &platformapi.PostBuildParams{
-		AnalysisType: (*platformapi.PostBuildParamsAnalysisType)(&config.AnalysisType),
-		Group:        &config.Group,
-	}, "application/octet-stream", file)
-	if err != nil {
-		return nil, err
-	}
-
-	zerolog.Ctx(ctx).Debug().Int("status", response.StatusCode()).Msg("Received http response")
-
-	if response.HTTPResponse.StatusCode >= 400 && response.HTTPResponse.StatusCode < 500 {
-		return nil, response.JSON4XX
-	}
-
-	if response.HTTPResponse.StatusCode >= 500 {
-		return nil, response.JSON5XX
-	}
-
-	buildResponse := platformapi.PostBuild2XX1{}
-
-	err = json.Unmarshal(response.Body, &buildResponse)
-
-	return &buildResponse, err
 }
