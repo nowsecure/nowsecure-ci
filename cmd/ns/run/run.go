@@ -13,6 +13,7 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
+//revive:disable:exported
 func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
@@ -33,9 +34,9 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 	}
 
 	runCmd.AddCommand(
-		RunFileCommand(v),
-		RunIdCommand(v),
-		RunPackageCommand(ctx, v),
+		FileCommand(v),
+		IDCommand(v),
+		PackageCommand(ctx, v),
 	)
 
 	return runCmd

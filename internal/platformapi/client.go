@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/nowsecure/nowsecure-ci/internal"
 	types "github.com/oapi-codegen/runtime/types"
 	"github.com/rs/zerolog"
+
+	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
 type LoggingDoer struct {
@@ -41,6 +42,7 @@ type TriggerAssessmentParams struct {
 	AnalysisType string
 	Platform     string
 }
+
 func TriggerAssessment(ctx context.Context, client *ClientWithResponses, p TriggerAssessmentParams) (*PostAppPlatformPackageAssessmentResponse, error) {
 	log := zerolog.Ctx(ctx)
 	log.Debug().Str("package", p.PackageName).Str("platform", p.Platform).Msg("Triggering assessment")
@@ -75,17 +77,18 @@ func TriggerAssessment(ctx context.Context, client *ClientWithResponses, p Trigg
 
 type UploadFileParams struct {
 	AnalysisType string
-	Group types.UUID
-	File *os.File
+	Group        types.UUID
+	File         *os.File
 }
+
 func UploadFile(ctx context.Context, client *ClientWithResponses, p UploadFileParams) (*PostBuild2XX1, error) {
 	zerolog.Ctx(ctx).Debug().Msg("Uploading file")
 
 	response, err := client.PostBuildWithBodyWithResponse(ctx, &PostBuildParams{
-		AnalysisType: (*PostBuildParamsAnalysisType)(&p.AnalysisType),
-		Group: &p.Group,
-		Assessment: Ptr(true),
-		Version: nil,
+		AnalysisType:            (*PostBuildParamsAnalysisType)(&p.AnalysisType),
+		Group:                   &p.Group,
+		Assessment:              Ptr(true),
+		Version:                 nil,
 		HideSensitiveDataValues: Ptr(false),
 	}, "application/octet-stream", p.File)
 	if err != nil {
@@ -126,11 +129,12 @@ func GetAppList(ctx context.Context, client *ClientWithResponses, p GetAppParams
 }
 
 type GetAssessmentParams struct {
-	Platform string
+	Platform    string
 	PackageName string
-	TaskId float64
-	Group types.UUID
+	TaskId      float64
+	Group       types.UUID
 }
+
 func GetAssessment(ctx context.Context, client *ClientWithResponses, p GetAssessmentParams) (*GetAppPlatformPackageAssessmentTaskResponse, error) {
 	resp, err := client.GetAppPlatformPackageAssessmentTaskWithResponse(
 		ctx,

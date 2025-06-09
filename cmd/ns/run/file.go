@@ -15,7 +15,7 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-func RunFileCommand(v *viper.Viper) *cobra.Command {
+func FileCommand(v *viper.Viper) *cobra.Command {
 	var fileCmd = &cobra.Command{
 		Use:       "file [./file-path]",
 		Short:     "Upload and run an assessment for a specified binary file",

@@ -15,7 +15,7 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-func RunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
+func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 	var packageCmd = &cobra.Command{
 		Use:       "package [package-name]",
 		Short:     "Run an assessment for a pre-existing app by specifying package and platform",

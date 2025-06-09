@@ -13,10 +13,9 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal"
 	"github.com/nowsecure/nowsecure-ci/internal/output"
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
-	types "github.com/oapi-codegen/runtime/types"
 )
 
-func RunIdCommand(v *viper.Viper) *cobra.Command {
+func IDCommand(v *viper.Viper) *cobra.Command {
 	var idCmd = &cobra.Command{
 		Use:       "id [app-id]",
 		Short:     "Run an assessment for a pre-existing app by specifying app-id",
@@ -53,8 +52,8 @@ func RunIdCommand(v *viper.Viper) *cobra.Command {
 			appList, err := platformapi.GetAppList(ctx, client, platformapi.GetAppParams{
 				Platform: (*platformapi.GetAppParamsPlatform)(&config.Platform),
 				Package:  nil,
-				Group:    (*types.UUID)(&config.Group),
-				Ref:      (*types.UUID)(&appId),
+				Group:    &config.Group,
+				Ref:      &appId,
 			})
 			if err != nil {
 				return err
@@ -99,7 +98,6 @@ func RunIdCommand(v *viper.Viper) *cobra.Command {
 
 			log.Info().Msg("Succeeded")
 			return w.Write(taskResponse.JSON2XX)
-
 		},
 	}
 	return idCmd
