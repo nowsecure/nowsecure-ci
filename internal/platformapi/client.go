@@ -44,8 +44,6 @@ type TriggerAssessmentParams struct {
 }
 
 func TriggerAssessment(ctx context.Context, client *ClientWithResponses, p TriggerAssessmentParams) (*PostAppPlatformPackageAssessmentResponse, error) {
-	log := zerolog.Ctx(ctx)
-	log.Debug().Str("package", p.PackageName).Str("platform", p.Platform).Msg("Triggering assessment")
 	response, err := client.PostAppPlatformPackageAssessmentWithResponse(
 		ctx,
 		PostAppPlatformPackageAssessmentParamsPlatform(p.Platform),
@@ -121,7 +119,6 @@ func GetAppList(ctx context.Context, client *ClientWithResponses, p GetAppParams
 		return nil, response.JSON5XX
 	}
 
-	zerolog.Ctx(ctx).Debug().Any("response", response.JSON2XX).Msg("Get app response")
 	return *response.JSON2XX, nil
 }
 
