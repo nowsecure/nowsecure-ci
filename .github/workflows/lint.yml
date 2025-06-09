@@ -20,7 +20,7 @@ jobs:
           dot: true
 
       - name: typos-action spellchecker
-        uses: crate-ci/typos@v1.32.0
+        uses: crate-ci/typos@v1.33.1
 
       - name: yamllint
         uses: ibiqlik/action-yamllint@v3
