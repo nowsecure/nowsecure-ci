@@ -99,6 +99,7 @@ func UploadFile(ctx context.Context, client *ClientWithResponses, p UploadFilePa
 		return nil, response.JSON5XX
 	}
 
+	// NOTE: if the assessment build param gets changed to 'false' then handle PostBuild2XX0 as well
 	buildResponse := PostBuild2XX1{}
 
 	err = json.Unmarshal(response.Body, &buildResponse)
