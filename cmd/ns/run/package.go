@@ -59,7 +59,7 @@ func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 
 			ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
 			defer cancel()
-			taskResponse, err := pollForResults(ctx, client, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task), config.PollForMinutes)
+			taskResponse, err := pollForResults(ctx, client, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task))
 			if err != nil {
 				return err
 			}

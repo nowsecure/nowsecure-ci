@@ -67,7 +67,7 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 
 			ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
 			defer cancel()
-			taskResponse, err := pollForResults(ctx, client, config.Group, buildResponse.Package, buildResponse.Platform, buildResponse.Task, config.PollForMinutes)
+			taskResponse, err := pollForResults(ctx, client, config.Group, buildResponse.Package, buildResponse.Platform, buildResponse.Task)
 			if err != nil {
 				return err
 			}
