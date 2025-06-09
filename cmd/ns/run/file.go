@@ -46,7 +46,7 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 
 			w, err := output.New(config.Output, config.OutputFormat)
 			if err != nil {
-				zerolog.Ctx(ctx).Panic().Err(err).Msg("Failed to create writer")
+				return err
 			}
 			defer w.Close()
 
