@@ -69,7 +69,7 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.PersistentFlags().StringP("group", "g", "", "group uuid with which to run assessments")
 	rootCmd.PersistentFlags().StringP("group-name", "", "", "group name with which to run assessments")
 	rootCmd.PersistentFlags().StringP("log-level", "", "info", "logging level")
-	rootCmd.PersistentFlags().StringP("output", "p", "", "write  output to <file> instead of stdout.")
+	rootCmd.PersistentFlags().StringP("output", "o", "", "write  output to <file> instead of stdout.")
 	rootCmd.PersistentFlags().StringP("output-format", "", "json", "write  output in specified format.")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
 	bindingErrors := []error{
