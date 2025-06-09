@@ -65,8 +65,6 @@ func IDCommand(v *viper.Viper) *cobra.Command {
 			app := appList[0]
 			config.Platform = string(app.Platform)
 
-			log.Info().Msg(config.Platform)
-
 			response, err := platformapi.TriggerAssessment(ctx, client, platformapi.TriggerAssessmentParams{
 				PackageName:  app.Package,
 				Group:        config.Group,
