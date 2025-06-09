@@ -17,9 +17,9 @@ type LoggingDoer struct {
 }
 
 func (ld *LoggingDoer) Do(req *http.Request) (*http.Response, error) {
-	zerolog.Ctx(req.Context()).Debug().Str("Path", req.URL.Path).Str("Query", req.URL.RawQuery).Msg("Making HTTP Request")
+	zerolog.Ctx(req.Context()).Debug().Str("Path", req.URL.Path).Str("Query", req.URL.RawQuery).Msg("Platform request")
 	resp, err := ld.client.Do(req)
-	zerolog.Ctx(req.Context()).Debug().Str("Status", resp.Status).Msg("HTTP Response")
+	zerolog.Ctx(req.Context()).Debug().Str("Status", resp.Status).Msg("Platform response")
 	return resp, err
 }
 
@@ -135,6 +135,7 @@ type GetAssessmentParams struct {
 	Group       types.UUID
 }
 
+// TODO impl these on clientWithResponses
 func GetAssessment(ctx context.Context, client *ClientWithResponses, p GetAssessmentParams) (*GetAppPlatformPackageAssessmentTaskResponse, error) {
 	resp, err := client.GetAppPlatformPackageAssessmentTaskWithResponse(
 		ctx,
