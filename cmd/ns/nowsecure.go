@@ -66,7 +66,7 @@ func configureFlags(ctx context.Context) error {
 
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
-	rootCmd.PersistentFlags().StringP("group", "g", "", "group uuid with which to run assessments")
+	rootCmd.PersistentFlags().StringP("group-ref", "g", "", "group uuid with which to run assessments")
 	rootCmd.PersistentFlags().StringP("group-name", "", "", "group name with which to run assessments")
 	rootCmd.PersistentFlags().StringP("log-level", "", "info", "logging level")
 	rootCmd.PersistentFlags().StringP("output", "o", "", "write  output to <file> instead of stdout.")
