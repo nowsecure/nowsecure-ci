@@ -43,7 +43,7 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 }
 
 func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
-	zerolog.Ctx(ctx).Debug().Msg("Beginning polling")
+	zerolog.Ctx(ctx).Debug().Msg("Polling started")
 
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
@@ -65,13 +65,12 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 				}
 			}
 
-			zerolog.Ctx(ctx).Debug().Any("task status", resp.JSON2XX).Msg("Successfully polled for task status")
+			zerolog.Ctx(ctx).Debug().Msg("Polling complete")
 
 			var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
 			var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
 			if resp.StatusCode() == 200 {
 				if *resp.JSON2XX.TaskStatus == completed || *resp.JSON2XX.TaskStatus == failed {
-					zerolog.Ctx(ctx).Debug().Msg("Task has completed")
 					return resp, nil
 				}
 			}
