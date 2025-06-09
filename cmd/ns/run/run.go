@@ -42,7 +42,7 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 	return runCmd
 }
 
-func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses, group types.UUID, packageName, platform string, task float64, minutes int) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
+func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
 	zerolog.Ctx(ctx).Debug().Msg("Beginning polling")
 
 	ticker := time.NewTicker(1 * time.Minute)
