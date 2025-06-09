@@ -58,11 +58,11 @@ func IDCommand(v *viper.Viper) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(*appList) != 1 {
-				return fmt.Errorf("got %d elements but expected exactly one", len(*appList))
+			if len(appList) != 1 {
+				return fmt.Errorf("got %d elements but expected exactly one", len(appList))
 			}
 
-			app := (*appList)[0]
+			app := appList[0]
 			config.Platform = string(app.Platform)
 
 			log.Info().Msg(config.Platform)

@@ -110,7 +110,7 @@ func UploadFile(ctx context.Context, client *ClientWithResponses, p UploadFilePa
 	return &buildResponse, err
 }
 
-func GetAppList(ctx context.Context, client *ClientWithResponses, p GetAppParams) (*[]LabApp, error) {
+func GetAppList(ctx context.Context, client *ClientWithResponses, p GetAppParams) ([]LabApp, error) {
 	response, err := client.GetAppWithResponse(ctx, &p)
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func GetAppList(ctx context.Context, client *ClientWithResponses, p GetAppParams
 	}
 
 	zerolog.Ctx(ctx).Debug().Any("response", response.JSON2XX).Msg("Get app response")
-	return response.JSON2XX, nil
+	return *response.JSON2XX, nil
 }
 
 type GetAssessmentParams struct {
