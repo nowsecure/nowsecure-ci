@@ -40,7 +40,6 @@ func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Debug().Msg("Client created")
 
 			response, err := platformapi.TriggerAssessment(ctx, client, platformapi.TriggerAssessmentParams{
 				PackageName:  packageName,
