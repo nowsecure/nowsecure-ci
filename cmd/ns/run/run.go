@@ -3,7 +3,6 @@ package run
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	types "github.com/oapi-codegen/runtime/types"
