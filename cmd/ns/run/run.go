@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	types "github.com/oapi-codegen/runtime/types"
@@ -61,15 +62,20 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 			})
 			if err != nil {
 				if labErr, ok := err.(*platformapi.LabRouteError); ok {
-					zerolog.Ctx(ctx).Error().Any("LabRouteError", labErr).Msg("API Error Response")
+					if code, err := labErr.StatusCode(); err == nil {
+						// 5XX errors should retry, otherwise we can fail fast
+						if code >= 500 {
+							continue
+						}
+					}
 				}
+				return resp, err
 			}
-
-			zerolog.Ctx(ctx).Debug().Msg("Polling complete")
 
 			var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
 			var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
 			if resp.StatusCode() == 200 {
+				zerolog.Ctx(ctx).Debug().Msg("Polling complete")
 				if *resp.JSON2XX.TaskStatus == completed || *resp.JSON2XX.TaskStatus == failed {
 					return resp, nil
 				}
