@@ -3,30 +3,75 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal"
+	"github.com/nowsecure/nowsecure-ci/internal/output"
+	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-func NewRunPackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
+func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 	var packageCmd = &cobra.Command{
 		Use:       "package [package-name]",
 		Short:     "Run an assessment for a pre-existing app by specifying package and platform",
 		Long:      ``,
 		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			config, _ := internal.NewRunConfig(v)
-
 			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
+			log := zerolog.Ctx(ctx)
 
 			packageName := args[0]
 
-			zerolog.Ctx(ctx).Panic().Interface("ctx", ctx).Interface("config", config).Str("packageName", packageName).Msg("")
+			w, err := output.New(config.Output, config.OutputFormat)
+			if err != nil {
+				return err
+			}
+			defer w.Close()
+
+			client, err := platformapi.ClientFromConfig(config, nil)
+			if err != nil {
+				return err
+			}
+
+			response, err := platformapi.TriggerAssessment(ctx, client, platformapi.TriggerAssessmentParams{
+				PackageName:  packageName,
+				Group:        config.Group,
+				AnalysisType: config.AnalysisType,
+				Platform:     config.Platform,
+			})
+			if err != nil {
+				return err
+			}
+
+			if config.PollForMinutes <= 0 {
+				log.Info().Msg("Succeeded")
+				return w.Write(response.JSON2XX)
+			}
+
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
+			defer cancel()
+			taskResponse, err := pollForResults(ctx, client, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task))
+			if err != nil {
+				return err
+			}
+
+			if !isAboveMinimum(taskResponse, config.MinimumScore) {
+				if err := w.Write(taskResponse.JSON2XX); err != nil {
+					return err
+				}
+				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
+			}
+
+			log.Info().Msg("Succeeded")
+			return w.Write(taskResponse.JSON2XX)
 		},
 	}
 

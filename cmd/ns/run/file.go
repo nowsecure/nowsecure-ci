@@ -2,103 +2,85 @@ package run
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal"
+	"github.com/nowsecure/nowsecure-ci/internal/output"
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-func NewRunFileCommand(v *viper.Viper) *cobra.Command {
+func FileCommand(v *viper.Viper) *cobra.Command {
 	var fileCmd = &cobra.Command{
 		Use:       "file [./file-path]",
 		Short:     "Upload and run an assessment for a specified binary file",
 		Long:      ``,
 		ValidArgs: []string{"file"},
 		Args:      cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
+			log := zerolog.Ctx(ctx)
 			fileName := args[0]
 			file, err := os.Open(fileName)
 			if err != nil {
-				zerolog.Ctx(ctx).Panic().Err(err).Msgf("Cannot open file %s", fileName)
+				return err
 			}
 
 			config, err := internal.NewRunConfig(v)
-
 			if err != nil {
-				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error creating config")
+				return err
 			}
 
 			ctx = internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 
-			client, err := internal.ClientFromConfig(config, nil)
-
+			client, err := platformapi.ClientFromConfig(config, nil)
 			if err != nil {
-				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error creating NowSecure API client")
+				return err
 			}
 
-			buildResponse, err := uploadFile(ctx, file, config, client)
-
+			w, err := output.New(config.Output, config.OutputFormat)
 			if err != nil {
-				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error submitting file for assessment")
+				return err
+			}
+			defer w.Close()
+
+			buildResponse, err := platformapi.UploadFile(ctx, client, platformapi.UploadFileParams{
+				AnalysisType: config.AnalysisType,
+				Group:        config.Group,
+				File:         file,
+			})
+			if err != nil {
+				return err
 			}
 
 			if config.PollForMinutes <= 0 {
-				// TODO this should probably pretty-print the build response instead of relying on structured logs
-				zerolog.Ctx(ctx).Info().Interface("Build Response", buildResponse).Msg("Succeeded")
-				return
+				log.Info().Msg("Succeeded")
+				err = w.Write(buildResponse)
+				return err
 			}
 
-			taskResponse, err := pollForResults(ctx, client, buildResponse.Package, buildResponse.Platform, buildResponse.Task, config.PollForMinutes)
-
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
+			defer cancel()
+			taskResponse, err := pollForResults(ctx, client, config.Group, buildResponse.Package, buildResponse.Platform, buildResponse.Task)
 			if err != nil {
-				zerolog.Ctx(ctx).Panic().Err(err).Msg("Error while polling for assessment results")
+				return err
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {
-				zerolog.Ctx(ctx).Panic().Msgf("The score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
+				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
 			}
 
-			// TODO this should probably pretty-print the build response instead of relying on structured logs
-			zerolog.Ctx(ctx).Info().Interface("Assessment", taskResponse.JSON2XX).Msg("Succeeded")
+			log.Info().Interface("Assessment", taskResponse.JSON2XX).Msg("Succeeded")
+
+			return w.Write(taskResponse.JSON2XX)
 		},
 	}
 
 	return fileCmd
-}
-
-func uploadFile(ctx context.Context, file *os.File, config internal.RunConfig, client *platformapi.ClientWithResponses) (*platformapi.PostBuild2XX1, error) {
-	zerolog.Ctx(ctx).Debug().Msg("uploading file")
-
-	response, responseError := client.PostBuildWithBodyWithResponse(ctx, &platformapi.PostBuildParams{
-		AnalysisType: (*platformapi.PostBuildParamsAnalysisType)(&config.AnalysisType),
-		Group:        &config.Group,
-	}, "application/octet-stream", file)
-
-	if responseError != nil {
-		return nil, responseError
-	}
-
-	zerolog.Ctx(ctx).Debug().Int("status", response.StatusCode()).Msg("Received http response")
-
-	if response.HTTPResponse.StatusCode >= 400 && response.HTTPResponse.StatusCode < 500 {
-		return nil, errors.New(*response.JSON4XX.Description)
-	}
-
-	if response.HTTPResponse.StatusCode >= 500 {
-		return nil, errors.New(*response.JSON5XX.Description)
-	}
-
-	buildResponse := platformapi.PostBuild2XX1{}
-
-	err := json.Unmarshal(response.Body, &buildResponse)
-
-	return &buildResponse, err
 }

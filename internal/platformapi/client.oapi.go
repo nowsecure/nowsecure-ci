@@ -3840,13 +3840,11 @@ func NewGetAppRequest(server string, params *GetAppParams) (*http.Request, error
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
-	fmt.Println(queryURL.String())
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(req.Header)
 	return req, nil
 }
 
@@ -6832,7 +6830,7 @@ type PostAppPlatformPackageAssessmentResponse struct {
 		} `json:"status"`
 
 		// Task An integer identifying the underlying analysis tasks associated with this assessment.
-		Task float32 `json:"task"`
+		Task float64 `json:"task"`
 
 		// TaskErrorCode The error code describing the failure if an assessment failed.
 		TaskErrorCode *string `json:"task_error_code"`
@@ -10062,7 +10060,7 @@ func ParsePostAppPlatformPackageAssessmentResponse(rsp *http.Response) (*PostApp
 			} `json:"status"`
 
 			// Task An integer identifying the underlying analysis tasks associated with this assessment.
-			Task float32 `json:"task"`
+			Task float64 `json:"task"`
 
 			// TaskErrorCode The error code describing the failure if an assessment failed.
 			TaskErrorCode *string `json:"task_error_code"`
