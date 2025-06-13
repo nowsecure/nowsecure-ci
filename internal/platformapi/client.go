@@ -19,7 +19,9 @@ type LoggingDoer struct {
 func (ld *LoggingDoer) Do(req *http.Request) (*http.Response, error) {
 	zerolog.Ctx(req.Context()).Debug().Str("Path", req.URL.Path).Str("Query", req.URL.RawQuery).Msg("Platform request")
 	resp, err := ld.client.Do(req)
-	zerolog.Ctx(req.Context()).Debug().Str("Status", resp.Status).Msg("Platform response")
+	if resp != nil {
+		zerolog.Ctx(req.Context()).Debug().Str("Status", resp.Status).Msg("Platform response")
+	}
 	return resp, err
 }
 
@@ -78,13 +80,21 @@ type UploadFileParams struct {
 }
 
 func UploadFile(ctx context.Context, client *ClientWithResponses, p UploadFileParams) (*PostBuild2XX1, error) {
-	response, err := client.PostBuildWithBodyWithResponse(ctx, &PostBuildParams{
+
+	params := &PostBuildParams{
 		AnalysisType:            (*PostBuildParamsAnalysisType)(&p.AnalysisType),
 		Group:                   &p.Group,
 		Assessment:              Ptr(true),
 		Version:                 nil,
 		HideSensitiveDataValues: Ptr(false),
-	}, "application/octet-stream", p.File)
+	}
+
+	if p.AnalysisType == "full" {
+		params.AnalysisType = nil
+	}
+
+	response, err := client.PostBuildWithBodyWithResponse(ctx, params,
+		"application/octet-stream", p.File)
 	if err != nil {
 		return nil, err
 	}

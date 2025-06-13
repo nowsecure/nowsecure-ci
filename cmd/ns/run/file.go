@@ -73,6 +73,10 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {
+				log.Debug().Any("Task", taskResponse).Msg("Task")
+				if err := w.Write(taskResponse.JSON2XX); err != nil {
+					return err
+				}
 				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
 			}
 
