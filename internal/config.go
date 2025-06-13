@@ -49,9 +49,9 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 	group := uuid.Nil
 	if v.IsSet("group-ref") {
 		var err error
-		group, err = uuid.Parse(v.GetString("group"))
+		group, err = uuid.Parse(v.GetString("group-ref"))
 		if err != nil {
-			return nil, errors.New("must have valid group")
+			return nil, errors.New("must have valid group-ref")
 		}
 	}
 

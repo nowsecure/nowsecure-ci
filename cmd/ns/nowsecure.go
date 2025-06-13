@@ -59,18 +59,21 @@ func configureFlags(ctx context.Context) error {
 		}
 	})
 
+	rootCmd.PersistentFlags().StringP("config", "c", "", "config file path")
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
-	rootCmd.PersistentFlags().StringP("group-ref", "g", "", "group uuid with which to run assessments")
-	rootCmd.PersistentFlags().StringP("group-name", "", "", "group name with which to run assessments")
-	rootCmd.PersistentFlags().StringP("log-level", "", "info", "logging level")
+	rootCmd.PersistentFlags().String("group-ref", "", "group uuid with which to run assessments")
+	rootCmd.PersistentFlags().String("group-name", "", "group name with which to run assessments")
+	rootCmd.PersistentFlags().String("log-level", "info", "logging level")
 	rootCmd.PersistentFlags().StringP("output", "o", "", "write  output to <file> instead of stdout.")
-	rootCmd.PersistentFlags().StringP("output-format", "", "json", "write  output in specified format.")
+	rootCmd.PersistentFlags().String("output-format", "json", "write  output in specified format.")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
 	bindingErrors := []error{
+		v.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")),
 		v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
 		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
-		v.BindPFlag("group", rootCmd.PersistentFlags().Lookup("group")),
+		v.BindPFlag("group-ref", rootCmd.PersistentFlags().Lookup("group-ref")),
+		v.BindPFlag("group-name", rootCmd.PersistentFlags().Lookup("group-name")),
 		v.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")),
 		v.BindPFlag("output_format", rootCmd.PersistentFlags().Lookup("output-format")),
 		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
@@ -90,11 +93,15 @@ func configureFlags(ctx context.Context) error {
 }
 
 func readConfigFile(v *viper.Viper) error {
+	if v.IsSet("config") {
+		v.SetConfigFile(v.GetString("config"))
+		return v.ReadInConfig()
+	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 	v.AddConfigPath(home)
-	err = v.ReadInConfig()
-	return err
+	return v.ReadInConfig()
 }
