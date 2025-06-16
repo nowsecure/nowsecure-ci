@@ -2,6 +2,7 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -47,11 +48,11 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 	}
 
 	group := uuid.Nil
-	if v.IsSet("group-ref") {
+	if v.IsSet("group_ref") {
 		var err error
-		group, err = uuid.Parse(v.GetString("group"))
+		group, err = uuid.Parse(v.GetString("group_ref"))
 		if err != nil {
-			return nil, errors.New("must have valid group")
+			return nil, fmt.Errorf("invalid group_ref: %w", err)
 		}
 	}
 
