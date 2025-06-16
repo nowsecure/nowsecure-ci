@@ -100,9 +100,8 @@ func readConfigFile(v *viper.Viper) error {
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		v.AddConfigPath(home)
 	}
-	v.AddConfigPath(home)
 	v.AddConfigPath(".")
 	return v.ReadInConfig()
 }
