@@ -64,6 +64,7 @@ func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {
+				log.Debug().Any("Task", taskResponse).Msg("Task")
 				if err := w.Write(taskResponse.JSON2XX); err != nil {
 					return err
 				}

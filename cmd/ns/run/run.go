@@ -74,8 +74,8 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 			var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
 			var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
 			if resp.StatusCode() == 200 {
-				zerolog.Ctx(ctx).Debug().Msg("Polling complete")
 				if *resp.JSON2XX.TaskStatus == completed || *resp.JSON2XX.TaskStatus == failed {
+					zerolog.Ctx(ctx).Debug().Msg("Polling complete")
 					return resp, nil
 				}
 			}
