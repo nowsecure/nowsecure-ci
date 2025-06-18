@@ -80,7 +80,6 @@ type UploadFileParams struct {
 }
 
 func UploadFile(ctx context.Context, client *ClientWithResponses, p UploadFileParams) (*PostBuild2XX1, error) {
-
 	params := &PostBuildParams{
 		AnalysisType:            (*PostBuildParamsAnalysisType)(&p.AnalysisType),
 		Group:                   &p.Group,
