@@ -13,7 +13,8 @@ import (
 )
 
 type BaseConfig struct {
-	Host         string
+	APIHost      string
+	UIHost       string
 	Token        string
 	Group        uuid.UUID
 	UserAgent    string
@@ -31,10 +32,10 @@ type RunConfig struct {
 }
 
 func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
-	host := v.GetString("host")
+	APIHost := v.GetString("api_host")
 	token := v.GetString("token")
 
-	if host == "" || token == "" {
+	if APIHost == "" || token == "" {
 		return nil, errors.New("host and token must both be specified either in a config file, or through a flag")
 	}
 
@@ -78,7 +79,8 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 
 	return &RunConfig{
 		BaseConfig: BaseConfig{
-			Host:         host,
+			APIHost:      APIHost,
+			UIHost:       v.GetString("ui_host"),
 			Token:        token,
 			Group:        group,
 			UserAgent:    v.GetString("user_agent"),

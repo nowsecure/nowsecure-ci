@@ -60,7 +60,8 @@ func configureFlags(ctx context.Context) error {
 	})
 
 	rootCmd.PersistentFlags().StringP("config", "c", "", "config file path")
-	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
+	rootCmd.PersistentFlags().String("api-host", "https://lab-api.nowsecure.com", "REST API base url")
+	rootCmd.PersistentFlags().String("ui-host", "https://app.nowsecure.com", "UI base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
 	rootCmd.PersistentFlags().String("group-ref", "", "group uuid with which to run assessments")
 	rootCmd.PersistentFlags().String("group-name", "", "group name with which to run assessments")
@@ -70,7 +71,8 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
 	bindingErrors := []error{
 		v.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")),
-		v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
+		v.BindPFlag("api_host", rootCmd.PersistentFlags().Lookup("api-host")),
+		v.BindPFlag("ui_host", rootCmd.PersistentFlags().Lookup("ui-host")),
 		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
 		v.BindPFlag("group_ref", rootCmd.PersistentFlags().Lookup("group-ref")),
 		v.BindPFlag("group_name", rootCmd.PersistentFlags().Lookup("group-name")),
@@ -99,7 +101,7 @@ func readConfigFile(v *viper.Viper) error {
 	}
 
 	home, err := os.UserHomeDir()
-	if err != nil {
+	if err == nil {
 		v.AddConfigPath(home)
 	}
 	v.AddConfigPath(".")
