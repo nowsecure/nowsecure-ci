@@ -23,8 +23,6 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 		ValidArgs: []string{"file"},
 		Args:      cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-
 			fileName := args[0]
 			file, err := os.Open(fileName)
 			if err != nil {
@@ -35,7 +33,7 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			ctx = internal.LoggerWithLevel(config.LogLevel).
+			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 			log := zerolog.Ctx(ctx)
 
