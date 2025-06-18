@@ -35,8 +35,12 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 	APIHost := v.GetString("api_host")
 	token := v.GetString("token")
 
-	if APIHost == "" || token == "" {
-		return nil, errors.New("host and token must both be specified either in a config file, or through a flag")
+	if APIHost == "" {
+		return nil, errors.New("API host must be specified either in a config file, the api_host envvar, or through the --api-host flag")
+	}
+
+	if token == "" {
+		return nil, errors.New("token must be specified either in a config file, an envvar, or through a flag")
 	}
 
 	logLevel, err := zerolog.ParseLevel(v.GetString("log_level"))
