@@ -63,7 +63,6 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.PersistentFlags().String("host", "https://lab-api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
 	rootCmd.PersistentFlags().String("group-ref", "", "group uuid with which to run assessments")
-	rootCmd.PersistentFlags().String("group-name", "", "group name with which to run assessments")
 	rootCmd.PersistentFlags().String("log-level", "info", "logging level")
 	rootCmd.PersistentFlags().StringP("output", "o", "", "write  output to <file> instead of stdout.")
 	rootCmd.PersistentFlags().String("output-format", "json", "write  output in specified format.")
@@ -73,7 +72,6 @@ func configureFlags(ctx context.Context) error {
 		v.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host")),
 		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
 		v.BindPFlag("group_ref", rootCmd.PersistentFlags().Lookup("group-ref")),
-		v.BindPFlag("group_name", rootCmd.PersistentFlags().Lookup("group-name")),
 		v.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")),
 		v.BindPFlag("output_format", rootCmd.PersistentFlags().Lookup("output-format")),
 		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
@@ -99,7 +97,7 @@ func readConfigFile(v *viper.Viper) error {
 	}
 
 	home, err := os.UserHomeDir()
-	if err != nil {
+	if err == nil {
 		v.AddConfigPath(home)
 	}
 	v.AddConfigPath(".")
