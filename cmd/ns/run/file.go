@@ -23,8 +23,6 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 		ValidArgs: []string{"file"},
 		Args:      cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-			log := zerolog.Ctx(ctx)
 			fileName := args[0]
 			file, err := os.Open(fileName)
 			if err != nil {
@@ -35,9 +33,9 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			ctx = internal.LoggerWithLevel(config.LogLevel).
+			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
+			log := zerolog.Ctx(ctx)
 
 			client, err := platformapi.ClientFromConfig(config, nil)
 			if err != nil {
@@ -58,6 +56,7 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			log.Info().Str("URL", fmt.Sprintf("%s/app/%s/assessment/%s", config.UIHost, buildResponse.Application, buildResponse.Ref)).Msg("Assessment URL")
 
 			if config.PollForMinutes <= 0 {
 				log.Info().Msg("Succeeded")
@@ -80,7 +79,7 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
 			}
 
-			log.Info().Interface("Assessment", taskResponse.JSON2XX).Msg("Succeeded")
+			log.Info().Msg("Succeeded")
 
 			return w.Write(taskResponse.JSON2XX)
 		},

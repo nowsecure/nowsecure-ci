@@ -30,7 +30,7 @@ func ClientFromConfig(config *internal.RunConfig, doer HttpRequestDoer) (*Client
 		doer = &LoggingDoer{&http.Client{}}
 	}
 
-	return NewClientWithResponses(config.Host,
+	return NewClientWithResponses(config.APIHost,
 		WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
 			req.Header.Add("User-Agent", config.UserAgent)
 			req.Header.Add("Authorization", "Bearer "+config.Token)
