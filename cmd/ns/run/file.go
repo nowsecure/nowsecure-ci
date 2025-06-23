@@ -56,7 +56,7 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Info().Str("URL", fmt.Sprintf("Running assessment with URL: %s/app/%s/assessment/%s", config.UIHost, buildResponse.Application, buildResponse.Ref)).Msg("Assessment URL")
+			log.Info().Str("URL", fmt.Sprintf("%s/app/%s/assessment/%s", config.UIHost, buildResponse.Application, buildResponse.Ref)).Msg("Assessment URL")
 
 			if config.PollForMinutes <= 0 {
 				log.Info().Msg("Succeeded")
@@ -72,6 +72,10 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {
+				log.Debug().Any("Task", taskResponse).Msg("Task")
+				if err := w.Write(taskResponse.JSON2XX); err != nil {
+					return err
+				}
 				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
 			}
 

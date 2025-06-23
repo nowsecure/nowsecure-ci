@@ -64,7 +64,6 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.PersistentFlags().String("ui-host", "https://app.nowsecure.com", "UI base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
 	rootCmd.PersistentFlags().String("group-ref", "", "group uuid with which to run assessments")
-	rootCmd.PersistentFlags().String("group-name", "", "group name with which to run assessments")
 	rootCmd.PersistentFlags().String("log-level", "info", "logging level")
 	rootCmd.PersistentFlags().StringP("output", "o", "", "write  output to <file> instead of stdout.")
 	rootCmd.PersistentFlags().String("output-format", "json", "write  output in specified format.")
@@ -75,7 +74,6 @@ func configureFlags(ctx context.Context) error {
 		v.BindPFlag("ui_host", rootCmd.PersistentFlags().Lookup("ui-host")),
 		v.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token")),
 		v.BindPFlag("group_ref", rootCmd.PersistentFlags().Lookup("group-ref")),
-		v.BindPFlag("group_name", rootCmd.PersistentFlags().Lookup("group-name")),
 		v.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")),
 		v.BindPFlag("output_format", rootCmd.PersistentFlags().Lookup("output-format")),
 		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
