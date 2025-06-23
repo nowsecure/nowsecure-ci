@@ -50,7 +50,7 @@ func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Info().Str("URL", fmt.Sprintf("Running assessment with URL: %s/app/%s/assessment/%s", config.UIHost, response.JSON2XX.Application, response.JSON2XX.Ref)).Msg("Assessment URL")
+			log.Info().Str("URL", fmt.Sprintf("%s/app/%s/assessment/%s", config.UIHost, response.JSON2XX.Application, response.JSON2XX.Ref)).Msg("Assessment URL")
 
 			if config.PollForMinutes <= 0 {
 				log.Info().Msg("Succeeded")
