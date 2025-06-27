@@ -3,12 +3,14 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
+	"github.com/nowsecure/nowsecure-ci/cmd/ns/version"
 	"github.com/nowsecure/nowsecure-ci/internal/output"
 )
 
@@ -81,13 +83,17 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 		}
 	}
 
+	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+
+	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", version.Version(), platformInfo, v.GetString("ci_environment")))
+
 	return &RunConfig{
 		BaseConfig: BaseConfig{
 			APIHost:      APIHost,
 			UIHost:       v.GetString("ui_host"),
 			Token:        token,
 			Group:        group,
-			UserAgent:    v.GetString("user_agent"),
+			UserAgent:    userAgent,
 			LogLevel:     logLevel,
 			Output:       v.GetString("output"),
 			OutputFormat: format,

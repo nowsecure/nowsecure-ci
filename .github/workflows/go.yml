@@ -24,7 +24,9 @@ jobs:
         run: go test ./...
 
       - name: Build
-        run: go build ./...
+        run: |
+          echo $(git describe --tags --always --dirty) > cmd/ns/version/version.txt
+          go build ./...
 
   golangci-lint:
     runs-on: ubuntu-latest

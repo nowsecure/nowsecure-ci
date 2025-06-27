@@ -36,7 +36,6 @@ func IDCommand(v *viper.Viper) *cobra.Command {
 			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 			log := zerolog.Ctx(ctx)
-			log.Info().Any("AppId", appId).Msg("Package command called")
 
 			client, err := platformapi.ClientFromConfig(config, nil)
 			if err != nil {
