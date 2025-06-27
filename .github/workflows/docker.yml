@@ -42,8 +42,6 @@ jobs:
 
       - name: Version Info
         id: version_step
-        outputs:
-          version:
         run: |
           if [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
             VERSION=${{ github.ref_name }}
