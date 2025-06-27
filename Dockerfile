@@ -11,7 +11,7 @@ RUN --mount=type=cache,target="/root/.cache/go-build" \
     CGO_ENABLED=0 \
     GOOS=${TARGETOS} \
     GOARCH=${TARGETARCH} \
-    go build -ldflags="-w -s -X 'github.com/nowsecure/nowsecure-ci/cmd/ns/version.version ${VERSION}'" -o ns .
+    go build -ldflags="-w -s -X 'github.com/nowsecure/nowsecure-ci/cmd/ns/version.version=${VERSION}'" -o ns .
 
 FROM alpine:3
 WORKDIR /app
