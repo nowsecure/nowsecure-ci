@@ -69,7 +69,7 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.PersistentFlags().String("log-level", "info", "logging level")
 	rootCmd.PersistentFlags().StringP("output", "o", "", "write  output to <file> instead of stdout.")
 	rootCmd.PersistentFlags().String("output-format", "json", "write  output in specified format.")
-	rootCmd.PersistentFlags().String("ci-environment", "", "appended to the user_agent header for internal tracking")
+	rootCmd.PersistentFlags().String("ci-environment", "", "appended to the user_agent header")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
 	bindingErrors := []error{
 		v.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")),
