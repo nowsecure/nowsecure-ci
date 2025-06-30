@@ -89,8 +89,6 @@ func configureFlags(ctx context.Context) error {
 
 	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
 
-	v.SetDefault("user_agent", "nowsecure-ci")
-
 	rootCmd.AddCommand(run.RunCommand(ctx, v))
 
 	return nil
