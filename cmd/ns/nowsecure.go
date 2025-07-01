@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
+	"github.com/nowsecure/nowsecure-ci/cmd/ns/version"
 	"github.com/nowsecure/nowsecure-ci/internal"
 	nserrors "github.com/nowsecure/nowsecure-ci/internal/errors"
 )
@@ -17,6 +18,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:           "ns",
 	Short:         "NowSecure command line tool to interact with NowSecure Platform",
+	Version:       version.Version(),
 	Long:          ``,
 	SilenceUsage:  true,
 	SilenceErrors: true,
@@ -67,6 +69,7 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.PersistentFlags().String("log-level", "info", "logging level")
 	rootCmd.PersistentFlags().StringP("output", "o", "", "write  output to <file> instead of stdout.")
 	rootCmd.PersistentFlags().String("output-format", "json", "write  output in specified format.")
+	rootCmd.PersistentFlags().String("ci-environment", "", "appended to the user_agent header")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose logging (same as --log-level debug)")
 	bindingErrors := []error{
 		v.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")),
@@ -77,6 +80,7 @@ func configureFlags(ctx context.Context) error {
 		v.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output")),
 		v.BindPFlag("output_format", rootCmd.PersistentFlags().Lookup("output-format")),
 		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
+		v.BindPFlag("ci_environment", rootCmd.PersistentFlags().Lookup("ci-environment")),
 		v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")),
 	}
 	if errs := errors.Join(bindingErrors...); errs != nil {
@@ -84,8 +88,6 @@ func configureFlags(ctx context.Context) error {
 	}
 
 	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
-
-	v.SetDefault("user_agent", "nowsecure-ci")
 
 	rootCmd.AddCommand(run.RunCommand(ctx, v))
 
