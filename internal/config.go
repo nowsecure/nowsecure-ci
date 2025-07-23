@@ -34,10 +34,6 @@ type RunConfig struct {
 	WithFindings   bool
 }
 
-type GetConfig struct {
-	BaseConfig
-}
-
 func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 	APIHost := v.GetString("api_host")
 	token := v.GetString("token")
@@ -122,16 +118,5 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 		PollForMinutes: v.GetInt("poll_for_minutes"),
 		MinimumScore:   v.GetInt("minimum_score"),
 		Platform:       platform,
-	}, nil
-}
-
-func NewGetConfig(v *viper.Viper) (*GetConfig, error) {
-	baseConfig, err := NewBaseConfig(v)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GetConfig{
-		BaseConfig: *baseConfig,
 	}, nil
 }
