@@ -91,7 +91,7 @@ func configureFlags(ctx context.Context) error {
 	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
 	rootCmd.MarkFlagFilename("config")
 
-	rootCmd.AddCommand(run.RunCommand(ctx, v), get.GetCommand(ctx, v))
+	rootCmd.AddCommand(run.RunCommand(ctx, v))
 
 	return nil
 }
