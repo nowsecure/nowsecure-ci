@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -37,7 +38,7 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 				WithContext(cmd.Context())
 			log := zerolog.Ctx(ctx)
 
-			client, err := platformapi.ClientFromConfig(config, nil)
+			client, err := platformapi.ClientFromConfig(&config.BaseConfig, nil)
 			if err != nil {
 				return err
 			}
@@ -69,6 +70,14 @@ func FileCommand(v *viper.Viper) *cobra.Command {
 			taskResponse, err := pollForResults(ctx, client, config.Group, buildResponse.Package, buildResponse.Platform, buildResponse.Task)
 			if err != nil {
 				return err
+			}
+
+			if config.WithFindings {
+				artifactPath := filepath.Join(config.ArtifactsDir, "findings.json")
+				err := writeFindings(ctx, client, buildResponse.Task, artifactPath)
+				if err != nil {
+					zerolog.Ctx(ctx).Error().Err(err).Str("ArtifactPath", artifactPath).Msg("Failed to write findings artifact")
+				}
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {

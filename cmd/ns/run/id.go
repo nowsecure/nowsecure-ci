@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,7 +38,7 @@ func IDCommand(v *viper.Viper) *cobra.Command {
 				WithContext(cmd.Context())
 			log := zerolog.Ctx(ctx)
 
-			client, err := platformapi.ClientFromConfig(config, nil)
+			client, err := platformapi.ClientFromConfig(&config.BaseConfig, nil)
 			if err != nil {
 				return err
 			}
@@ -85,6 +86,14 @@ func IDCommand(v *viper.Viper) *cobra.Command {
 			taskResponse, err := pollForResults(ctx, client, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task))
 			if err != nil {
 				return err
+			}
+
+			if config.WithFindings {
+				artifactPath := filepath.Join(config.ArtifactsDir, "findings.json")
+				err := writeFindings(ctx, client, float64(response.JSON2XX.Task), artifactPath)
+				if err != nil {
+					zerolog.Ctx(ctx).Error().Err(err).Str("ArtifactPath", artifactPath).Msg("Failed to write findings artifact")
+				}
 			}
 
 			if !isAboveMinimum(taskResponse, config.MinimumScore) {

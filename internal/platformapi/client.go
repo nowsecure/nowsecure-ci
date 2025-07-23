@@ -3,6 +3,8 @@ package platformapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -25,7 +27,7 @@ func (ld *LoggingDoer) Do(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func ClientFromConfig(config *internal.RunConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
+func ClientFromConfig(config *internal.BaseConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
 	if doer == nil {
 		doer = &LoggingDoer{&http.Client{}}
 	}
@@ -161,4 +163,25 @@ func GetAssessment(ctx context.Context, client *ClientWithResponses, p GetAssess
 	}
 
 	return resp, nil
+}
+
+func GetFindings(ctx context.Context, client *ClientWithResponses, task float64) ([]byte, error) {
+	resp, err := client.GetAssessmentTaskFindings(
+		ctx,
+		task,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+		return nil, fmt.Errorf("Received 4XX status from findings endpoint")
+	}
+
+	if resp.StatusCode >= 500 {
+		return nil, fmt.Errorf("Received 5XX status from findings endpoint")
+	}
+
+	return io.ReadAll(resp.Body)
 }

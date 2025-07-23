@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
-	"github.com/nowsecure/nowsecure-ci/cmd/ns/version"
 	"github.com/nowsecure/nowsecure-ci/internal/output"
 )
 
@@ -23,6 +22,7 @@ type BaseConfig struct {
 	LogLevel     zerolog.Level
 	Output       string
 	OutputFormat output.Formats
+	ArtifactsDir string
 }
 
 type RunConfig struct {
@@ -31,9 +31,14 @@ type RunConfig struct {
 	PollForMinutes int
 	MinimumScore   int
 	Platform       string
+	WithFindings   bool
 }
 
-func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
+type GetConfig struct {
+	BaseConfig
+}
+
+func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 	APIHost := v.GetString("api_host")
 	token := v.GetString("token")
 
@@ -62,17 +67,6 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 			return nil, fmt.Errorf("invalid group_ref: %w", err)
 		}
 	}
-
-	platform := ""
-
-	if v.IsSet("platform_android") {
-		platform = "android"
-	}
-
-	if v.IsSet("platform_ios") {
-		platform = "ios"
-	}
-
 	var format output.Formats
 	if v.IsSet("output_format") {
 		switch strings.ToLower(v.GetString("output_format")) {
@@ -84,23 +78,60 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 	}
 
 	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", "0.2.0", platformInfo, v.GetString("ci_environment")))
 
-	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", version.Version(), platformInfo, v.GetString("ci_environment")))
+	return &BaseConfig{
+		APIHost:      APIHost,
+		UIHost:       v.GetString("ui_host"),
+		Token:        token,
+		Group:        group,
+		UserAgent:    userAgent,
+		ArtifactsDir: v.GetString("artifacts_dir"),
+		LogLevel:     logLevel,
+		Output:       v.GetString("output"),
+		OutputFormat: format,
+	}, nil
+
+}
+
+func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
+
+	baseConfig, err := NewBaseConfig(v)
+	if err != nil {
+		return nil, err
+	}
+
+	if v.IsSet("fetch_artifacts") && v.GetInt("poll_for_minutes") <= 0 {
+		return nil, fmt.Errorf("cannot set fetch_artifacts without setting a nonzero poll_for_minutes")
+	}
+
+	platform := ""
+
+	if v.IsSet("platform_android") {
+		platform = "android"
+	}
+
+	if v.IsSet("platform_ios") {
+		platform = "ios"
+	}
 
 	return &RunConfig{
-		BaseConfig: BaseConfig{
-			APIHost:      APIHost,
-			UIHost:       v.GetString("ui_host"),
-			Token:        token,
-			Group:        group,
-			UserAgent:    userAgent,
-			LogLevel:     logLevel,
-			Output:       v.GetString("output"),
-			OutputFormat: format,
-		},
+		BaseConfig:     *baseConfig,
 		AnalysisType:   v.GetString("analysis_type"),
+		WithFindings:   v.GetBool("with_findings"),
 		PollForMinutes: v.GetInt("poll_for_minutes"),
 		MinimumScore:   v.GetInt("minimum_score"),
 		Platform:       platform,
+	}, nil
+}
+
+func NewGetConfig(v *viper.Viper) (*GetConfig, error) {
+	baseConfig, err := NewBaseConfig(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetConfig{
+		BaseConfig: *baseConfig,
 	}, nil
 }

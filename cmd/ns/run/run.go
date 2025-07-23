@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/nowsecure/nowsecure-ci/internal/output"
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
@@ -24,7 +25,11 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 	runCmd.PersistentFlags().String("analysis-type", "full", "One of: full, static, sbom")
 	runCmd.PersistentFlags().Int("poll-for-minutes", 60, "polling max duration")
 	runCmd.PersistentFlags().Int("minimum-score", 0, "score threshold below which we exit code 1")
+	runCmd.PersistentFlags().Bool("with-findings", false, "fetch all findings associated with an assessment and write to findings.json file")
+	runCmd.PersistentFlags().String("artifacts-dir", "nowsecure-artifacts", "directory in which to put artifacts")
 	bindingErrors := []error{
+		v.BindPFlag("with_findings", runCmd.PersistentFlags().Lookup("with-findings")),
+		v.BindPFlag("artifacts_dir", runCmd.PersistentFlags().Lookup("artifacts-dir")),
 		v.BindPFlag("analysis_type", runCmd.PersistentFlags().Lookup("analysis-type")),
 		v.BindPFlag("poll_for_minutes", runCmd.PersistentFlags().Lookup("poll-for-minutes")),
 		v.BindPFlag("minimum_score", runCmd.PersistentFlags().Lookup("minimum-score")),
@@ -32,6 +37,8 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 	if errs := errors.Join(bindingErrors...); errs != nil {
 		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding run level flags")
 	}
+
+	runCmd.MarkFlagDirname("artifacts-dir")
 
 	runCmd.AddCommand(
 		FileCommand(v),
@@ -85,4 +92,18 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 
 func isAboveMinimum(taskResponse *platformapi.GetAppPlatformPackageAssessmentTaskResponse, threshold int) bool {
 	return *taskResponse.JSON2XX.AdjustedScore >= float32(threshold)
+}
+
+func writeFindings(ctx context.Context, client *platformapi.ClientWithResponses, task float64, artifactPath string) error {
+	v, err := platformapi.GetFindings(ctx, client, task)
+	if err != nil {
+		return err
+	}
+
+	w, err := output.New(artifactPath, output.Raw)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+	return w.Write(v)
 }

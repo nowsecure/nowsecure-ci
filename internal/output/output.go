@@ -12,6 +12,7 @@ type Formats int
 const (
 	JSON Formats = iota
 	Pretty
+	Raw
 )
 
 type CLIWriter struct {
@@ -46,6 +47,10 @@ func (o *CLIWriter) Write(data any) error {
 		enc := json.NewEncoder(o.writer)
 		enc.SetIndent("", "  ")
 		return enc.Encode(data)
+	case Raw:
+		d := data.([]byte)
+		_, err := o.writer.Write([]byte(d))
+		return err
 	default:
 		return fmt.Errorf("unknown format option provided")
 	}
