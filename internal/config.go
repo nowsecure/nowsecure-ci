@@ -97,8 +97,8 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 		return nil, err
 	}
 
-	if v.IsSet("fetch_artifacts") && v.GetInt("poll_for_minutes") <= 0 {
-		return nil, fmt.Errorf("cannot set fetch_artifacts without setting a nonzero poll_for_minutes")
+	if v.IsSet("with-artifacts") && v.GetInt("poll_for_minutes") <= 0 {
+		return nil, fmt.Errorf("cannot set with_artifacts without setting a nonzero poll_for_minutes")
 	}
 
 	platform := ""
