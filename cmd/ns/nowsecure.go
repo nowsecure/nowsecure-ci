@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/nowsecure/nowsecure-ci/cmd/ns/get"
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/version"
 	"github.com/nowsecure/nowsecure-ci/internal"
