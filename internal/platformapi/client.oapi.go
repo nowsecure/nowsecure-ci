@@ -3098,7 +3098,7 @@ type ClientInterface interface {
 	GetAssessmentRefReportPdf(ctx context.Context, ref openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetAssessmentTaskFindings request
-	GetAssessmentTaskFindings(ctx context.Context, task float32, params *GetAssessmentTaskFindingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetAssessmentTaskFindings(ctx context.Context, task float64, params *GetAssessmentTaskFindingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetAssessmentTaskSummary request
 	GetAssessmentTaskSummary(ctx context.Context, task float32, params *GetAssessmentTaskSummaryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3432,7 +3432,7 @@ func (c *Client) GetAssessmentRefReportPdf(ctx context.Context, ref openapi_type
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetAssessmentTaskFindings(ctx context.Context, task float32, params *GetAssessmentTaskFindingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetAssessmentTaskFindings(ctx context.Context, task float64, params *GetAssessmentTaskFindingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAssessmentTaskFindingsRequest(c.Server, task, params)
 	if err != nil {
 		return nil, err
@@ -4998,7 +4998,7 @@ func NewGetAssessmentRefReportPdfRequest(server string, ref openapi_types.UUID) 
 }
 
 // NewGetAssessmentTaskFindingsRequest generates requests for GetAssessmentTaskFindings
-func NewGetAssessmentTaskFindingsRequest(server string, task float32, params *GetAssessmentTaskFindingsParams) (*http.Request, error) {
+func NewGetAssessmentTaskFindingsRequest(server string, task float64, params *GetAssessmentTaskFindingsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8836,7 +8836,7 @@ func (c *ClientWithResponses) GetAssessmentRefReportPdfWithResponse(ctx context.
 }
 
 // GetAssessmentTaskFindingsWithResponse request returning *GetAssessmentTaskFindingsResponse
-func (c *ClientWithResponses) GetAssessmentTaskFindingsWithResponse(ctx context.Context, task float32, params *GetAssessmentTaskFindingsParams, reqEditors ...RequestEditorFn) (*GetAssessmentTaskFindingsResponse, error) {
+func (c *ClientWithResponses) GetAssessmentTaskFindingsWithResponse(ctx context.Context, task float64, params *GetAssessmentTaskFindingsParams, reqEditors ...RequestEditorFn) (*GetAssessmentTaskFindingsResponse, error) {
 	rsp, err := c.GetAssessmentTaskFindings(ctx, task, params, reqEditors...)
 	if err != nil {
 		return nil, err
