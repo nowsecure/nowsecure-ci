@@ -48,8 +48,11 @@ func (o *CLIWriter) Write(data any) error {
 		enc.SetIndent("", "  ")
 		return enc.Encode(data)
 	case Raw:
-		d := data.([]byte)
-		_, err := o.writer.Write([]byte(d))
+		d, ok := data.([]byte)
+		if !ok {
+			return fmt.Errorf("raw output format option requires []byte")
+		}
+		_, err := o.writer.Write(d)
 		return err
 	default:
 		return fmt.Errorf("unknown format option provided")

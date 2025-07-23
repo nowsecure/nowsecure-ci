@@ -176,11 +176,11 @@ func GetFindings(ctx context.Context, client *ClientWithResponses, task float64)
 	}
 
 	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		return nil, fmt.Errorf("Received 4XX status from findings endpoint")
+		return nil, fmt.Errorf("received 4XX status from findings endpoint")
 	}
 
 	if resp.StatusCode >= 500 {
-		return nil, fmt.Errorf("Received 5XX status from findings endpoint")
+		return nil, fmt.Errorf("received 5XX status from findings endpoint")
 	}
 
 	return io.ReadAll(resp.Body)

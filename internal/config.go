@@ -87,11 +87,9 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 		Output:       v.GetString("output"),
 		OutputFormat: format,
 	}, nil
-
 }
 
 func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
-
 	baseConfig, err := NewBaseConfig(v)
 	if err != nil {
 		return nil, err

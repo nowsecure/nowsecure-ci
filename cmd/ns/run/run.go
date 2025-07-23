@@ -33,12 +33,11 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 		v.BindPFlag("analysis_type", runCmd.PersistentFlags().Lookup("analysis-type")),
 		v.BindPFlag("poll_for_minutes", runCmd.PersistentFlags().Lookup("poll-for-minutes")),
 		v.BindPFlag("minimum_score", runCmd.PersistentFlags().Lookup("minimum-score")),
+		runCmd.MarkFlagDirname("artifacts-dir"),
 	}
 	if errs := errors.Join(bindingErrors...); errs != nil {
 		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding run level flags")
 	}
-
-	runCmd.MarkFlagDirname("artifacts-dir")
 
 	runCmd.AddCommand(
 		FileCommand(v),
