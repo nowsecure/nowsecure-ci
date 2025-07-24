@@ -25,15 +25,14 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 	runCmd.PersistentFlags().String("analysis-type", "full", "One of: full, static, sbom")
 	runCmd.PersistentFlags().Int("poll-for-minutes", 60, "polling max duration")
 	runCmd.PersistentFlags().Int("minimum-score", 0, "score threshold below which we exit code 1")
-	runCmd.PersistentFlags().Bool("with-findings", false, "fetch all findings associated with an assessment and write to findings.json file")
+	runCmd.PersistentFlags().Bool("save-findings", false, "fetch all findings associated with an assessment and write to findings.json file")
 	runCmd.PersistentFlags().String("artifacts-dir", "nowsecure-artifacts", "directory in which to put artifacts")
 	bindingErrors := []error{
-		v.BindPFlag("with_findings", runCmd.PersistentFlags().Lookup("with-findings")),
+		v.BindPFlag("save_findings", runCmd.PersistentFlags().Lookup("save-findings")),
 		v.BindPFlag("artifacts_dir", runCmd.PersistentFlags().Lookup("artifacts-dir")),
 		v.BindPFlag("analysis_type", runCmd.PersistentFlags().Lookup("analysis-type")),
 		v.BindPFlag("poll_for_minutes", runCmd.PersistentFlags().Lookup("poll-for-minutes")),
 		v.BindPFlag("minimum_score", runCmd.PersistentFlags().Lookup("minimum-score")),
-		runCmd.MarkFlagDirname("artifacts-dir"),
 	}
 	if errs := errors.Join(bindingErrors...); errs != nil {
 		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding run level flags")

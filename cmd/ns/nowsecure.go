@@ -82,7 +82,6 @@ func configureFlags(ctx context.Context) error {
 		v.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level")),
 		v.BindPFlag("ci_environment", rootCmd.PersistentFlags().Lookup("ci-environment")),
 		v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")),
-		rootCmd.MarkFlagFilename("config"),
 	}
 	if errs := errors.Join(bindingErrors...); errs != nil {
 		return errs

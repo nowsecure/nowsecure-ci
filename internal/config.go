@@ -3,6 +3,8 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -22,16 +24,16 @@ type BaseConfig struct {
 	LogLevel     zerolog.Level
 	Output       string
 	OutputFormat output.Formats
-	ArtifactsDir string
 }
 
 type RunConfig struct {
 	BaseConfig
-	AnalysisType   string
-	PollForMinutes int
-	MinimumScore   int
-	Platform       string
-	WithFindings   bool
+	AnalysisType         string
+	PollForMinutes       int
+	MinimumScore         int
+	Platform             string
+	FindingsArtifactPath string
+	ArtifactsDir         string
 }
 
 func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
@@ -82,7 +84,6 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 		Token:        token,
 		Group:        group,
 		UserAgent:    userAgent,
-		ArtifactsDir: v.GetString("artifacts_dir"),
 		LogLevel:     logLevel,
 		Output:       v.GetString("output"),
 		OutputFormat: format,
@@ -109,12 +110,26 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 		platform = "ios"
 	}
 
+	artifactsDir := ""
+	if v.IsSet("artifacts_dir") {
+		artifactsDir = v.GetString("artifacts_dir")
+		if err := os.MkdirAll(artifactsDir, os.ModePerm); err != nil {
+			return nil, err
+		}
+	}
+
+	findingsArtifactPath := ""
+
+	if v.IsSet("save-findings") {
+		findingsArtifactPath = filepath.Join(artifactsDir, "findings.json")
+	}
+
 	return &RunConfig{
-		BaseConfig:     *baseConfig,
-		AnalysisType:   v.GetString("analysis_type"),
-		WithFindings:   v.GetBool("with_findings"),
-		PollForMinutes: v.GetInt("poll_for_minutes"),
-		MinimumScore:   v.GetInt("minimum_score"),
-		Platform:       platform,
+		BaseConfig:           *baseConfig,
+		AnalysisType:         v.GetString("analysis_type"),
+		FindingsArtifactPath: findingsArtifactPath,
+		PollForMinutes:       v.GetInt("poll_for_minutes"),
+		MinimumScore:         v.GetInt("minimum_score"),
+		Platform:             platform,
 	}, nil
 }

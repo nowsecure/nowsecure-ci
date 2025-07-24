@@ -3,7 +3,6 @@ package run
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -88,11 +87,10 @@ func IDCommand(v *viper.Viper) *cobra.Command {
 				return err
 			}
 
-			if config.WithFindings {
-				artifactPath := filepath.Join(config.ArtifactsDir, "findings.json")
-				err := writeFindings(ctx, client, float64(response.JSON2XX.Task), artifactPath)
+			if config.FindingsArtifactPath != "" {
+				err := writeFindings(ctx, client, float64(response.JSON2XX.Task), config.FindingsArtifactPath)
 				if err != nil {
-					zerolog.Ctx(ctx).Error().Err(err).Str("ArtifactPath", artifactPath).Msg("Failed to write findings artifact")
+					zerolog.Ctx(ctx).Error().Err(err).Str("ArtifactPath", config.FindingsArtifactPath).Msg("Failed to write findings artifact")
 				}
 			}
 
