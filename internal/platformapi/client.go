@@ -3,8 +3,6 @@ package platformapi
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"os"
 
@@ -165,8 +163,8 @@ func GetAssessment(ctx context.Context, client *ClientWithResponses, p GetAssess
 	return resp, nil
 }
 
-func GetFindings(ctx context.Context, client *ClientWithResponses, task float64) ([]byte, error) {
-	resp, err := client.GetAssessmentTaskFindings(
+func GetFindings(ctx context.Context, client *ClientWithResponses, task float64) (*[]GetAssessmentTaskFindings_2XX_Item, error) {
+	resp, err := client.GetAssessmentTaskFindingsWithResponse(
 		ctx,
 		task,
 		nil,
@@ -175,13 +173,13 @@ func GetFindings(ctx context.Context, client *ClientWithResponses, task float64)
 		return nil, err
 	}
 
-	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		return nil, fmt.Errorf("received 4XX status from findings endpoint")
+	if resp.HTTPResponse.StatusCode >= 400 && resp.HTTPResponse.StatusCode < 500 {
+		return nil, resp.JSON4XX
 	}
 
-	if resp.StatusCode >= 500 {
-		return nil, fmt.Errorf("received 5XX status from findings endpoint")
+	if resp.HTTPResponse.StatusCode >= 500 {
+		return nil, resp.JSON5XX
 	}
 
-	return io.ReadAll(resp.Body)
+	return resp.JSON2XX, nil
 }

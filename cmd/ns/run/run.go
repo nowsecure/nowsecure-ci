@@ -98,7 +98,7 @@ func writeFindings(ctx context.Context, client *platformapi.ClientWithResponses,
 		return err
 	}
 
-	w, err := output.New(artifactPath, output.Raw)
+	w, err := output.New(artifactPath, output.JSON)
 	if err != nil {
 		return err
 	}

@@ -96,8 +96,8 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 		return nil, err
 	}
 
-	if v.IsSet("with-artifacts") && v.GetInt("poll_for_minutes") <= 0 {
-		return nil, fmt.Errorf("cannot set with_artifacts without setting a nonzero poll_for_minutes")
+	if v.IsSet("save_findings") && v.GetInt("poll_for_minutes") <= 0 {
+		return nil, fmt.Errorf("cannot set save-findings without setting a nonzero poll-for-minutes")
 	}
 
 	platform := ""
@@ -111,7 +111,8 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 	}
 
 	artifactsDir := ""
-	if v.IsSet("artifacts_dir") {
+	if v.GetString("artifacts_dir") != "" && v.GetBool("save_findings") {
+		fmt.Println("Artifacts dir is set")
 		artifactsDir = v.GetString("artifacts_dir")
 		if err := os.MkdirAll(artifactsDir, os.ModePerm); err != nil {
 			return nil, err
