@@ -3,6 +3,9 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	types "github.com/oapi-codegen/runtime/types"
@@ -22,11 +25,16 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 		Long:  ``,
 	}
 
+	dir, err := os.Getwd()
+	if err != nil {
+		zerolog.Ctx(ctx).Panic().Err(err).Msg("Failed to get present working directory")
+	}
+
 	runCmd.PersistentFlags().String("analysis-type", "full", "One of: full, static, sbom")
 	runCmd.PersistentFlags().Int("poll-for-minutes", 60, "polling max duration")
 	runCmd.PersistentFlags().Int("minimum-score", 0, "score threshold below which we exit code 1")
-	runCmd.PersistentFlags().Bool("save-findings", false, "fetch all findings associated with an assessment and write to findings.json file")
-	runCmd.PersistentFlags().String("artifacts-dir", "nowsecure-artifacts", "directory in which to put artifacts")
+	runCmd.PersistentFlags().String("artifacts-dir", dir, "directory in which to put artifacts")
+	runCmd.PersistentFlags().Bool("save-findings", false, fmt.Sprintf("fetch all findings associated with an assessment and write to %s", filepath.Join(dir, "findings.json")))
 	bindingErrors := []error{
 		v.BindPFlag("save_findings", runCmd.PersistentFlags().Lookup("save-findings")),
 		v.BindPFlag("artifacts_dir", runCmd.PersistentFlags().Lookup("artifacts-dir")),

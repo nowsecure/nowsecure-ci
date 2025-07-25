@@ -112,7 +112,6 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 
 	artifactsDir := ""
 	if v.GetString("artifacts_dir") != "" && v.GetBool("save_findings") {
-		fmt.Println("Artifacts dir is set")
 		artifactsDir = v.GetString("artifacts_dir")
 		if err := os.MkdirAll(artifactsDir, os.ModePerm); err != nil {
 			return nil, err
