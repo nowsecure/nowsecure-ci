@@ -12,7 +12,6 @@ type Formats int
 const (
 	JSON Formats = iota
 	Pretty
-	Raw
 )
 
 type CLIWriter struct {

@@ -110,17 +110,14 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 		platform = "ios"
 	}
 
-	artifactsDir := ""
-	if v.GetString("artifacts_dir") != "" && v.GetBool("save_findings") {
-		artifactsDir = v.GetString("artifacts_dir")
+	artifactsDir := v.GetString("artifacts_dir")
+	findingsArtifactPath := ""
+
+	if v.GetBool("save_findings") {
 		if err := os.MkdirAll(artifactsDir, os.ModePerm); err != nil {
 			return nil, err
 		}
-	}
 
-	findingsArtifactPath := ""
-
-	if v.IsSet("save-findings") {
 		findingsArtifactPath = filepath.Join(artifactsDir, "findings.json")
 	}
 
