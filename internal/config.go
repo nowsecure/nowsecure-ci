@@ -3,6 +3,8 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -10,7 +12,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
-	"github.com/nowsecure/nowsecure-ci/cmd/ns/version"
 	"github.com/nowsecure/nowsecure-ci/internal/output"
 )
 
@@ -27,13 +28,15 @@ type BaseConfig struct {
 
 type RunConfig struct {
 	BaseConfig
-	AnalysisType   string
-	PollForMinutes int
-	MinimumScore   int
-	Platform       string
+	AnalysisType         string
+	PollForMinutes       int
+	MinimumScore         int
+	Platform             string
+	FindingsArtifactPath string
+	ArtifactsDir         string
 }
 
-func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
+func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 	APIHost := v.GetString("api_host")
 	token := v.GetString("token")
 
@@ -62,17 +65,6 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 			return nil, fmt.Errorf("invalid group_ref: %w", err)
 		}
 	}
-
-	platform := ""
-
-	if v.IsSet("platform_android") {
-		platform = "android"
-	}
-
-	if v.IsSet("platform_ios") {
-		platform = "ios"
-	}
-
 	var format output.Formats
 	if v.IsSet("output_format") {
 		switch strings.ToLower(v.GetString("output_format")) {
@@ -84,23 +76,57 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 	}
 
 	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", "0.2.0", platformInfo, v.GetString("ci_environment")))
 
-	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", version.Version(), platformInfo, v.GetString("ci_environment")))
+	return &BaseConfig{
+		APIHost:      APIHost,
+		UIHost:       v.GetString("ui_host"),
+		Token:        token,
+		Group:        group,
+		UserAgent:    userAgent,
+		LogLevel:     logLevel,
+		Output:       v.GetString("output"),
+		OutputFormat: format,
+	}, nil
+}
+
+func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
+	baseConfig, err := NewBaseConfig(v)
+	if err != nil {
+		return nil, err
+	}
+
+	if v.IsSet("save_findings") && v.GetInt("poll_for_minutes") <= 0 {
+		return nil, fmt.Errorf("cannot set save-findings without setting a nonzero poll-for-minutes")
+	}
+
+	platform := ""
+
+	if v.IsSet("platform_android") {
+		platform = "android"
+	}
+
+	if v.IsSet("platform_ios") {
+		platform = "ios"
+	}
+
+	artifactsDir := v.GetString("artifacts_dir")
+	findingsArtifactPath := ""
+
+	if v.GetBool("save_findings") {
+		if err := os.MkdirAll(artifactsDir, os.ModePerm); err != nil {
+			return nil, err
+		}
+
+		findingsArtifactPath = filepath.Join(artifactsDir, "findings.json")
+	}
 
 	return &RunConfig{
-		BaseConfig: BaseConfig{
-			APIHost:      APIHost,
-			UIHost:       v.GetString("ui_host"),
-			Token:        token,
-			Group:        group,
-			UserAgent:    userAgent,
-			LogLevel:     logLevel,
-			Output:       v.GetString("output"),
-			OutputFormat: format,
-		},
-		AnalysisType:   v.GetString("analysis_type"),
-		PollForMinutes: v.GetInt("poll_for_minutes"),
-		MinimumScore:   v.GetInt("minimum_score"),
-		Platform:       platform,
+		BaseConfig:           *baseConfig,
+		AnalysisType:         v.GetString("analysis_type"),
+		FindingsArtifactPath: findingsArtifactPath,
+		PollForMinutes:       v.GetInt("poll_for_minutes"),
+		MinimumScore:         v.GetInt("minimum_score"),
+		Platform:             platform,
 	}, nil
 }

@@ -25,7 +25,7 @@ func (ld *LoggingDoer) Do(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func ClientFromConfig(config *internal.RunConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
+func ClientFromConfig(config *internal.BaseConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
 	if doer == nil {
 		doer = &LoggingDoer{&http.Client{}}
 	}
@@ -161,4 +161,25 @@ func GetAssessment(ctx context.Context, client *ClientWithResponses, p GetAssess
 	}
 
 	return resp, nil
+}
+
+func GetFindings(ctx context.Context, client *ClientWithResponses, task float64) (*[]GetAssessmentTaskFindings_2XX_Item, error) {
+	resp, err := client.GetAssessmentTaskFindingsWithResponse(
+		ctx,
+		task,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.HTTPResponse.StatusCode >= 400 && resp.HTTPResponse.StatusCode < 500 {
+		return nil, resp.JSON4XX
+	}
+
+	if resp.HTTPResponse.StatusCode >= 500 {
+		return nil, resp.JSON5XX
+	}
+
+	return resp.JSON2XX, nil
 }
