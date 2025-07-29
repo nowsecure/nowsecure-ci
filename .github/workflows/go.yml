@@ -13,10 +13,6 @@ on:
 
 jobs:
   test:
-    strategy:
-      matrix:
-        goos: [linux, windows, darwin]
-        goarch: [amd64, arm64]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +24,49 @@ jobs:
 
       - name: Test
         run: go test ./...
+
+      - name: Version Info
+        id: version_step
+        run: |
+          if [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
+            VERSION=${{ github.ref_name }}
+          else
+            VERSION="dev-${{ github.sha }}"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build
+        run: go build ./..
+
+  golangci-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "./go.mod"
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1
+
+  publish:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "./go.mod"
 
       - name: Version Info
         id: version_step
@@ -57,17 +96,3 @@ jobs:
         with:
           name: ns_${{ matrix.goos }}-${{ matrix.goarch }}
           path: ns_${{ matrix.goos }}-${{ matrix.goarch }}*
-
-  golangci-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: "./go.mod"
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
-        with:
-          version: v2.1
