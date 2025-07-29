@@ -8,8 +8,6 @@ on:
   pull_request:
   push:
     branches: ["main"]
-    tags:
-      - "v*.*.*"
 
 jobs:
   test:
@@ -41,4 +39,3 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1
-
