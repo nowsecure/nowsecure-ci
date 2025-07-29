@@ -37,7 +37,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build
-        run: go build ./..
+        run: go build ./...
 
   golangci-lint:
     runs-on: ubuntu-latest
