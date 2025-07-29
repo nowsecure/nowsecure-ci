@@ -8,9 +8,15 @@ on:
   pull_request:
   push:
     branches: ["main"]
+    tags:
+      - "v*.*.*"
 
 jobs:
   test:
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,8 +29,34 @@ jobs:
       - name: Test
         run: go test ./...
 
+      - name: Version Info
+        id: version_step
+        run: |
+          if [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
+            VERSION=${{ github.ref_name }}
+          else
+            VERSION="dev-${{ github.sha }}"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Build
-        run: go build ./...
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          BINARY_NAME="ns_${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY_NAME+=".exe"
+          fi
+          go build -ldflags="-w -s -X 'github.com/nowsecure/nowsecure-ci/cmd/ns/version.version=${{ steps.version_step.outputs.version }}'" -o $BINARY_NAME
+
+      - name: Upload Artifact
+        if: github.ref_type == 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ns_${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ns_${{ matrix.goos }}-${{ matrix.goarch }}*
 
   golangci-lint:
     runs-on: ubuntu-latest
