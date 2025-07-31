@@ -101,7 +101,15 @@ func isAboveMinimum(taskResponse *platformapi.GetAppPlatformPackageAssessmentTas
 }
 
 func writeFindings(ctx context.Context, client *platformapi.ClientWithResponses, task float64, artifactPath string) error {
-	v, err := platformapi.GetFindings(ctx, client, task)
+	findings, err := platformapi.GetFindings(ctx, client, task)
+	var filteredFindings []platformapi.GetAssessmentTaskFindings_2XX_Item
+
+	for _, v := range *findings {
+		if v.Affected {
+			filteredFindings = append(filteredFindings, v)
+		}
+	}
+
 	if err != nil {
 		return err
 	}
@@ -111,5 +119,5 @@ func writeFindings(ctx context.Context, client *platformapi.ClientWithResponses,
 		return err
 	}
 	defer w.Close()
-	return w.Write(v)
+	return w.Write(filteredFindings)
 }

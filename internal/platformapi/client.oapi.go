@@ -8019,7 +8019,7 @@ type GetAssessmentTaskFindings_2XX_Item struct {
 		Certificate *map[string]interface{}            `json:"certificate,omitempty"`
 		Fields      *map[string]map[string]interface{} `json:"fields,omitempty"`
 		PdfView     *string                            `json:"pdfView,omitempty"`
-		Rows        *map[string]interface{}            `json:"rows,omitempty"`
+		Rows        *[]map[string]interface{}          `json:"rows,omitempty"`
 	} `json:"context,omitempty"`
 
 	// Cvss The CVSS score of the finding.
