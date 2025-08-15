@@ -86,7 +86,8 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 
 			var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
 			var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
-			if resp.StatusCode() == 200 {
+			// A 2XX indicates a finalized assessment but not necessarily the findings or score being calculated
+			if resp.StatusCode() == 200 && resp.JSON2XX.AdjustedScore != nil {
 				if *resp.JSON2XX.TaskStatus == completed || *resp.JSON2XX.TaskStatus == failed {
 					zerolog.Ctx(ctx).Debug().Msg("Polling complete")
 					return resp, nil
@@ -102,7 +103,7 @@ func isAboveMinimum(taskResponse *platformapi.GetAppPlatformPackageAssessmentTas
 
 func writeFindings(ctx context.Context, client *platformapi.ClientWithResponses, task float64, artifactPath string) error {
 	findings, err := platformapi.GetFindings(ctx, client, task)
-	if err != nil {
+	if err != nil || findings == nil {
 		return err
 	}
 
