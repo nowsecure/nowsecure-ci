@@ -88,9 +88,13 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 			var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
 			if resp.StatusCode() == 200 {
 				// A 2XX indicates a finalized assessment but not necessarily the findings or score being calculated
-				if (*resp.JSON2XX.TaskStatus == completed && resp.JSON2XX.AdjustedScore != nil) || *resp.JSON2XX.TaskStatus == failed {
+				if *resp.JSON2XX.TaskStatus == completed && resp.JSON2XX.AdjustedScore != nil {
 					zerolog.Ctx(ctx).Debug().Msg("Polling complete")
 					return resp, nil
+				}
+				if *resp.JSON2XX.TaskStatus == failed {
+					zerolog.Ctx(ctx).Debug().Msg("Polling complete")
+					return nil, fmt.Errorf("assessment failed with %v", *resp.JSON2XX.TaskErrorCode)
 				}
 			}
 		}
