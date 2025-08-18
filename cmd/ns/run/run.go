@@ -93,12 +93,14 @@ func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses
 					return resp, nil
 				}
 
+				errorCode := "nil"
+				if resp.JSON2XX.TaskErrorCode != nil {
+					errorCode = *resp.JSON2XX.TaskErrorCode
+				}
+
 				if *resp.JSON2XX.TaskStatus == failed {
 					zerolog.Ctx(ctx).Debug().Msg("Polling complete")
-					if resp.JSON2XX.TaskErrorCode == nil {
-						return nil, fmt.Errorf("assessment failed with unknown error")
-					}
-					return nil, fmt.Errorf("assessment failed with %v", *resp.JSON2XX.TaskErrorCode)
+					return nil, fmt.Errorf("assessment failed with %v error code", errorCode)
 				}
 			}
 		}
