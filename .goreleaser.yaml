@@ -23,7 +23,7 @@ builds:
 archives:
   - formats:
       - tgz
-    wrap_in_directory: true
+    wrap_in_directory: false
     # name template for the tgz files
     name_template: >-
       ns_{{ .Os }}-{{ .Arch }}
