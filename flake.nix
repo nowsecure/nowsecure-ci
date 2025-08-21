@@ -69,7 +69,7 @@
         {
           default = pkgs.mkShell {
             packages = [
-              # Development dependancies
+              # Development dependencies
               pkgs.cobra-cli
               pkgs.go_1_24
               pkgs.gopls
