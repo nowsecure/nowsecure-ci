@@ -3,10 +3,6 @@
 
 version: 2
 
-before:
-  hooks:
-    - go mod tidy
-
 builds:
   - env:
       - CGO_ENABLED=0
@@ -31,6 +27,16 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
+
+nfpms:
+  - maintainer: NowSecure
+    description: A CLI interface for interacting with the NowSecure API
+    homepage: https://github.com/nowsecure/nowsecure-ci
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
 
 changelog:
   sort: asc
