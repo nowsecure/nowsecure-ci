@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    ldflags:
+      - "-w -s -X 'github.com/nowsecure/nowsecure-ci/cmd/ns/version.version=${{ .Version }}'"
+    # name template for the binaries
+    binary: >-
+      ns_{{ .Os }}-{{ .Arch }}
+
+archives:
+  - formats:
+      - tgz
+    wrap_in_directory: false
+    # name template for the tgz files
+    name_template: >-
+      ns_{{ .Os }}-{{ .Arch }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+nfpms:
+  - maintainer: NowSecure
+    description: A CLI interface for interacting with the NowSecure API
+    homepage: https://github.com/nowsecure/nowsecure-ci
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
+
+changelog:
+  sort: asc
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).

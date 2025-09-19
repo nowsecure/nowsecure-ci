@@ -8,10 +8,6 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        goos: [linux, windows, darwin]
-        goarch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v4
 
@@ -20,31 +16,11 @@ jobs:
         with:
           go-version-file: "./go.mod"
 
-      - name: Version Info
-        id: version_step
-        run: |
-          if [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
-            VERSION=${{ github.ref_name }}
-          else
-            VERSION="dev-${{ github.sha }}"
-          fi
-
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Build
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          BINARY_NAME="ns_${{ matrix.goos }}-${{ matrix.goarch }}"
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            BINARY_NAME+=".exe"
-          fi
-          go build -ldflags="-w -s -X 'github.com/nowsecure/nowsecure-ci/cmd/ns/version.version=${{ steps.version_step.outputs.version }}'" -o $BINARY_NAME
-
-      - name: Upload Artifact
-        if: github.ref_type == 'tag'
-        uses: actions/upload-artifact@v4
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
-          name: ns_${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ns_${{ matrix.goos }}-${{ matrix.goarch }}*
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
