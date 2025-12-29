@@ -27,7 +27,7 @@ func PackageCommand(c context.Context, v *viper.Viper, config *internal.BaseConf
 			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 			packageName := args[0]
-			return RunPackage(ctx, packageName, config)
+			return ByPackage(ctx, packageName, config)
 		},
 	}
 
@@ -49,7 +49,7 @@ func PackageCommand(c context.Context, v *viper.Viper, config *internal.BaseConf
 	return packageCmd
 }
 
-func RunPackage(ctx context.Context, packageName string, config *internal.RunConfig) error {
+func ByPackage(ctx context.Context, packageName string, config *internal.RunConfig) error {
 	log := zerolog.Ctx(ctx)
 	w, err := output.New(config.Output, config.OutputFormat)
 	if err != nil {

@@ -34,13 +34,13 @@ func IDCommand(v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
 			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 
-			return RunID(ctx, appID, config)
+			return ByID(ctx, appID, config)
 		},
 	}
 	return idCmd
 }
 
-func RunID(ctx context.Context, appID uuid.UUID, config *internal.RunConfig) error {
+func ByID(ctx context.Context, appID uuid.UUID, config *internal.RunConfig) error {
 	log := zerolog.Ctx(ctx)
 	client := config.PlatformClient
 

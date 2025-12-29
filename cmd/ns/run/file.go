@@ -31,12 +31,12 @@ func FileCommand(v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
 			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
 
-			return RunFile(ctx, fileName, config)
+			return ByFile(ctx, fileName, config)
 		},
 	}
 }
 
-func RunFile(ctx context.Context, fileName string, config *internal.RunConfig) error {
+func ByFile(ctx context.Context, fileName string, config *internal.RunConfig) error {
 	log := zerolog.Ctx(ctx)
 	file, err := os.Open(fileName)
 	if err != nil {
