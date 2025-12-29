@@ -15,7 +15,7 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
-func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
+func PackageCommand(c context.Context, v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
 	var packageCmd = &cobra.Command{
 		Use:       "package [package-name]",
 		Short:     "Run an assessment for a pre-existing app by specifying package and platform",
@@ -26,62 +26,8 @@ func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 			config, _ := internal.NewRunConfig(v)
 			ctx := internal.LoggerWithLevel(config.LogLevel).
 				WithContext(cmd.Context())
-			log := zerolog.Ctx(ctx)
-
 			packageName := args[0]
-
-			w, err := output.New(config.Output, config.OutputFormat)
-			if err != nil {
-				return err
-			}
-			defer w.Close()
-
-			client, err := platformapi.ClientFromConfig(&config.BaseConfig, nil)
-			if err != nil {
-				return err
-			}
-
-			response, err := platformapi.TriggerAssessment(ctx, client, platformapi.TriggerAssessmentParams{
-				PackageName:  packageName,
-				Group:        config.Group,
-				AnalysisType: config.AnalysisType,
-				Platform:     config.Platform,
-			})
-			if err != nil {
-				return err
-			}
-			log.Info().Str("URL", fmt.Sprintf("%s/app/%s/assessment/%s", config.UIHost, response.JSON2XX.Application, response.JSON2XX.Ref)).Msg("Assessment URL")
-
-			if config.PollForMinutes <= 0 {
-				log.Info().Msg("Succeeded")
-				return w.Write(response.JSON2XX)
-			}
-
-			ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
-			defer cancel()
-			taskResponse, err := pollForResults(ctx, client, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task))
-			if err != nil {
-				return err
-			}
-
-			if config.FindingsArtifactPath != "" {
-				err := writeFindings(ctx, client, float64(response.JSON2XX.Task), config.FindingsArtifactPath)
-				if err != nil {
-					zerolog.Ctx(ctx).Error().Err(err).Str("ArtifactPath", config.FindingsArtifactPath).Msg("Failed to write findings artifact")
-					return err
-				}
-			}
-
-			if !isAboveMinimum(taskResponse, config.MinimumScore) {
-				log.Debug().Any("Task", taskResponse).Msg("Task")
-				if err := w.Write(taskResponse.JSON2XX); err != nil {
-					return err
-				}
-				return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
-			}
-
-			log.Info().Msg("Succeeded")
-			return w.Write(taskResponse.JSON2XX)
+			return ByPackage(ctx, packageName, config)
 		},
 	}
 
@@ -101,4 +47,57 @@ func PackageCommand(c context.Context, v *viper.Viper) *cobra.Command {
 	}
 
 	return packageCmd
+}
+
+func ByPackage(ctx context.Context, packageName string, config *internal.RunConfig) error {
+	log := zerolog.Ctx(ctx)
+	w, err := output.New(config.Output, config.OutputFormat)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+
+	client := config.PlatformClient
+
+	response, err := platformapi.TriggerAssessment(ctx, client, platformapi.TriggerAssessmentParams{
+		PackageName:  packageName,
+		Group:        config.Group,
+		AnalysisType: config.AnalysisType,
+		Platform:     config.Platform,
+	})
+	if err != nil {
+		return err
+	}
+	log.Info().Str("URL", fmt.Sprintf("%s/app/%s/assessment/%s", config.UIHost, response.JSON2XX.Application, response.JSON2XX.Ref)).Msg("Assessment URL")
+
+	if config.PollForMinutes <= 0 {
+		log.Info().Msg("Succeeded")
+		return w.Write(response.JSON2XX)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
+	defer cancel()
+	taskResponse, err := pollForResults(ctx, client, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task))
+	if err != nil {
+		return err
+	}
+
+	if config.FindingsArtifactPath != "" {
+		err := writeFindings(ctx, client, float64(response.JSON2XX.Task), config.FindingsArtifactPath)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Str("ArtifactPath", config.FindingsArtifactPath).Msg("Failed to write findings artifact")
+			return err
+		}
+	}
+
+	if !isAboveMinimum(taskResponse, config.MinimumScore) {
+		log.Debug().Any("Task", taskResponse).Msg("Task")
+		if err := w.Write(taskResponse.JSON2XX); err != nil {
+			return err
+		}
+		return fmt.Errorf("the score %.2f is less than the required minimum %d", *taskResponse.JSON2XX.AdjustedScore, config.MinimumScore)
+	}
+
+	log.Info().Msg("Succeeded")
+	return w.Write(taskResponse.JSON2XX)
 }

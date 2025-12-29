@@ -13,17 +13,17 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/nowsecure/nowsecure-ci/internal/output"
+	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
 type BaseConfig struct {
-	APIHost      string
-	UIHost       string
-	Token        string
-	Group        uuid.UUID
-	UserAgent    string
-	LogLevel     zerolog.Level
-	Output       string
-	OutputFormat output.Formats
+	APIHost        string
+	UIHost         string
+	PlatformClient platformapi.ClientWithResponsesInterface
+	Group          uuid.UUID
+	LogLevel       zerolog.Level
+	Output         string
+	OutputFormat   output.Formats
 }
 
 type RunConfig struct {
@@ -74,19 +74,25 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 			return nil, errors.New("must have valid output format")
 		}
 	}
-
 	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", "0.2.0", platformInfo, v.GetString("ci_environment")))
 
+	platformClient, err := platformapi.ClientFromConfig(platformapi.Config{
+		Host:      APIHost,
+		UserAgent: userAgent,
+		Token:     token,
+	}, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	return &BaseConfig{
-		APIHost:      APIHost,
-		UIHost:       v.GetString("ui_host"),
-		Token:        token,
-		Group:        group,
-		UserAgent:    userAgent,
-		LogLevel:     logLevel,
-		Output:       v.GetString("output"),
-		OutputFormat: format,
+		UIHost:         v.GetString("ui_host"),
+		PlatformClient: platformClient,
+		Group:          group,
+		LogLevel:       logLevel,
+		Output:         v.GetString("output"),
+		OutputFormat:   format,
 	}, nil
 }
 

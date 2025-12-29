@@ -12,54 +12,37 @@ import (
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/run"
 	"github.com/nowsecure/nowsecure-ci/cmd/ns/version"
 	"github.com/nowsecure/nowsecure-ci/internal"
-	nserrors "github.com/nowsecure/nowsecure-ci/internal/errors"
 )
 
-var rootCmd = &cobra.Command{
-	Use:           "ns",
-	Short:         "NowSecure command line tool to interact with NowSecure Platform",
-	Version:       version.Version(),
-	Long:          ``,
-	SilenceUsage:  true,
-	SilenceErrors: true,
-}
+func RootCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:           "ns",
+		Short:         "NowSecure command line tool to interact with NowSecure Platform",
+		Version:       version.Version(),
+		Long:          ``,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			v.SetEnvPrefix("NS")
+			v.AutomaticEnv()
+			v.SetConfigType("yaml")
+			v.SetConfigName(".ns-ci")
+			err := readConfigFile(v)
 
-func Execute() {
-	ctx := zerolog.New(internal.ConsoleLevelWriter{}).
-		With().
-		Timestamp().
-		Logger().
-		Level(zerolog.WarnLevel).
-		WithContext(context.Background())
+			if err != nil {
+				zerolog.Ctx(ctx).Debug().Err(err).Msg("Error reading from config file")
+				return err
+			}
 
-	err := configureFlags(ctx)
-	if err != nil {
-		zerolog.Ctx(ctx).Panic().Err(err).Msg("")
+			baseConfig, err := internal.NewBaseConfig(v)
+			if err != nil {
+				return err
+			}
+			config = baseConfig
+
+			return nil
+		},
 	}
-
-	err = rootCmd.ExecuteContext(ctx)
-	if err != nil {
-		if reqErr, ok := err.(nserrors.CIError); ok {
-			zerolog.Ctx(ctx).Error().Any("LabRouteError", reqErr).Msg("API Error Response")
-			os.Exit(reqErr.ExitCode())
-		}
-		zerolog.Ctx(ctx).Fatal().Msg(err.Error())
-	}
-}
-
-func configureFlags(ctx context.Context) error {
-	v := viper.New()
-	v.SetEnvPrefix("NS")
-	v.AutomaticEnv()
-	v.SetConfigType("yaml")
-	v.SetConfigName(".ns-ci")
-
-	cobra.OnInitialize(func() {
-		err := readConfigFile(v)
-		if err != nil {
-			zerolog.Ctx(ctx).Debug().Err(err).Msg("Error reading from config file")
-		}
-	})
 
 	rootCmd.PersistentFlags().StringP("config", "c", "", "config file path")
 	rootCmd.PersistentFlags().String("api-host", "https://lab-api.nowsecure.com", "REST API base url")
@@ -84,14 +67,14 @@ func configureFlags(ctx context.Context) error {
 		v.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")),
 	}
 	if errs := errors.Join(bindingErrors...); errs != nil {
-		return errs
+		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding run level flags")
 	}
 
 	rootCmd.MarkFlagsMutuallyExclusive("log-level", "verbose")
 
-	rootCmd.AddCommand(run.RunCommand(ctx, v))
+	rootCmd.AddCommand(run.RunCommand(ctx, v, config))
 
-	return nil
+	return rootCmd
 }
 
 func readConfigFile(v *viper.Viper) error {

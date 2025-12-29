@@ -13,12 +13,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/nowsecure/nowsecure-ci/internal"
 	"github.com/nowsecure/nowsecure-ci/internal/output"
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
 //revive:disable:exported
-func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
+func RunCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an assessment for a given application",
@@ -46,16 +47,17 @@ func RunCommand(ctx context.Context, v *viper.Viper) *cobra.Command {
 		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding run level flags")
 	}
 
+	// Pass each run command a run config built in RunCommand's persistent pre run step
 	runCmd.AddCommand(
-		FileCommand(v),
-		IDCommand(v),
-		PackageCommand(ctx, v),
+		FileCommand(v, config),
+		IDCommand(v, config),
+		PackageCommand(ctx, v, config),
 	)
 
 	return runCmd
 }
 
-func pollForResults(ctx context.Context, client *platformapi.ClientWithResponses, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
+func pollForResults(ctx context.Context, client platformapi.ClientWithResponsesInterface, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
 	zerolog.Ctx(ctx).Debug().Msg("Polling started")
 
 	ticker := time.NewTicker(1 * time.Minute)
@@ -111,7 +113,7 @@ func isAboveMinimum(taskResponse *platformapi.GetAppPlatformPackageAssessmentTas
 	return *taskResponse.JSON2XX.AdjustedScore >= float32(threshold)
 }
 
-func writeFindings(ctx context.Context, client *platformapi.ClientWithResponses, task float64, artifactPath string) error {
+func writeFindings(ctx context.Context, client platformapi.ClientWithResponsesInterface, task float64, artifactPath string) error {
 	findings, err := platformapi.GetFindings(ctx, client, task)
 	if err != nil || findings == nil {
 		return err
