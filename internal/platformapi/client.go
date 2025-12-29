@@ -33,13 +33,13 @@ func (c *TestRequestDoer) Do(req *http.Request) (*http.Response, error) {
 	return arg.Get(0).(*http.Response), arg.Error(1)
 }
 
-type PlatformAPIConfig struct {
+type Config struct {
 	Host      string
 	UserAgent string
 	Token     string
 }
 
-func ClientFromConfig(config PlatformAPIConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
+func ClientFromConfig(config Config, doer HttpRequestDoer) (*ClientWithResponses, error) {
 	if doer == nil {
 		doer = &LoggingDoer{&http.Client{}}
 	}

@@ -77,11 +77,14 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", "0.2.0", platformInfo, v.GetString("ci_environment")))
 
-	platformClient, err := platformapi.ClientFromConfig(platformapi.PlatformAPIConfig{
+	platformClient, err := platformapi.ClientFromConfig(platformapi.Config{
 		Host:      APIHost,
 		UserAgent: userAgent,
 		Token:     token,
 	}, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return &BaseConfig{
 		UIHost:         v.GetString("ui_host"),

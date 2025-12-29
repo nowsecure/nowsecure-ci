@@ -24,6 +24,9 @@ func IDCommand(v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
 		Args:      cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			appID, err := uuid.Parse(args[0])
+			if err != nil {
+				return err
+			}
 			config, err := internal.NewRunConfig(v)
 			if err != nil {
 				return err

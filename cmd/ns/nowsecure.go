@@ -35,10 +35,12 @@ func RootCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfi
 			}
 
 			baseConfig, err := internal.NewBaseConfig(v)
+			if err != nil {
+				return err
+			}
 			config = baseConfig
 
 			return nil
-
 		},
 	}
 

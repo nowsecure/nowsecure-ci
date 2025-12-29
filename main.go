@@ -1,14 +1,15 @@
 package main
 
 import (
-	cmd "github.com/nowsecure/nowsecure-ci/cmd/ns"
-
 	"context"
-	"github.com/nowsecure/nowsecure-ci/internal"
-	nserrors "github.com/nowsecure/nowsecure-ci/internal/errors"
+	"os"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
-	"os"
+
+	cmd "github.com/nowsecure/nowsecure-ci/cmd/ns"
+	"github.com/nowsecure/nowsecure-ci/internal"
+	nserrors "github.com/nowsecure/nowsecure-ci/internal/errors"
 )
 
 func main() {
