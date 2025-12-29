@@ -5813,7 +5813,7 @@ type ClientWithResponsesInterface interface {
 	GetAssessmentRefReportPdfWithResponse(ctx context.Context, ref openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetAssessmentRefReportPdfResponse, error)
 
 	// GetAssessmentTaskFindingsWithResponse request
-	GetAssessmentTaskFindingsWithResponse(ctx context.Context, task float32, params *GetAssessmentTaskFindingsParams, reqEditors ...RequestEditorFn) (*GetAssessmentTaskFindingsResponse, error)
+	GetAssessmentTaskFindingsWithResponse(ctx context.Context, task float64, params *GetAssessmentTaskFindingsParams, reqEditors ...RequestEditorFn) (*GetAssessmentTaskFindingsResponse, error)
 
 	// GetAssessmentTaskSummaryWithResponse request
 	GetAssessmentTaskSummaryWithResponse(ctx context.Context, task float32, params *GetAssessmentTaskSummaryParams, reqEditors ...RequestEditorFn) (*GetAssessmentTaskSummaryResponse, error)

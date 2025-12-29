@@ -8,8 +8,7 @@ import (
 
 	types "github.com/oapi-codegen/runtime/types"
 	"github.com/rs/zerolog"
-
-	"github.com/nowsecure/nowsecure-ci/internal"
+	"github.com/stretchr/testify/mock"
 )
 
 type LoggingDoer struct {
@@ -25,12 +24,27 @@ func (ld *LoggingDoer) Do(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func ClientFromConfig(config *internal.BaseConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
+type TestRequestDoer struct {
+	mock.Mock
+}
+
+func (c *TestRequestDoer) Do(req *http.Request) (*http.Response, error) {
+	arg := c.Called(req)
+	return arg.Get(0).(*http.Response), arg.Error(1)
+}
+
+type PlatformAPIConfig struct {
+	Host      string
+	UserAgent string
+	Token     string
+}
+
+func ClientFromConfig(config PlatformAPIConfig, doer HttpRequestDoer) (*ClientWithResponses, error) {
 	if doer == nil {
 		doer = &LoggingDoer{&http.Client{}}
 	}
 
-	return NewClientWithResponses(config.APIHost,
+	return NewClientWithResponses(config.Host,
 		WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
 			req.Header.Add("User-Agent", config.UserAgent)
 			req.Header.Add("Authorization", "Bearer "+config.Token)
@@ -45,7 +59,7 @@ type TriggerAssessmentParams struct {
 	Platform     string
 }
 
-func TriggerAssessment(ctx context.Context, client *ClientWithResponses, p TriggerAssessmentParams) (*PostAppPlatformPackageAssessmentResponse, error) {
+func TriggerAssessment(ctx context.Context, client ClientWithResponsesInterface, p TriggerAssessmentParams) (*PostAppPlatformPackageAssessmentResponse, error) {
 	response, err := client.PostAppPlatformPackageAssessmentWithResponse(
 		ctx,
 		PostAppPlatformPackageAssessmentParamsPlatform(p.Platform),
@@ -79,7 +93,7 @@ type UploadFileParams struct {
 	File         *os.File
 }
 
-func UploadFile(ctx context.Context, client *ClientWithResponses, p UploadFileParams) (*PostBuild2XX1, error) {
+func UploadFile(ctx context.Context, client ClientWithResponsesInterface, p UploadFileParams) (*PostBuild2XX1, error) {
 	params := &PostBuildParams{
 		AnalysisType:            (*PostBuildParamsAnalysisType)(&p.AnalysisType),
 		Group:                   &p.Group,
@@ -114,7 +128,7 @@ func UploadFile(ctx context.Context, client *ClientWithResponses, p UploadFilePa
 	return &buildResponse, err
 }
 
-func GetAppList(ctx context.Context, client *ClientWithResponses, p GetAppParams) ([]LabApp, error) {
+func GetAppList(ctx context.Context, client ClientWithResponsesInterface, p GetAppParams) ([]LabApp, error) {
 	response, err := client.GetAppWithResponse(ctx, &p)
 	if err != nil {
 		return nil, err
@@ -139,7 +153,7 @@ type GetAssessmentParams struct {
 }
 
 // TODO impl these on clientWithResponses
-func GetAssessment(ctx context.Context, client *ClientWithResponses, p GetAssessmentParams) (*GetAppPlatformPackageAssessmentTaskResponse, error) {
+func GetAssessment(ctx context.Context, client ClientWithResponsesInterface, p GetAssessmentParams) (*GetAppPlatformPackageAssessmentTaskResponse, error) {
 	resp, err := client.GetAppPlatformPackageAssessmentTaskWithResponse(
 		ctx,
 		GetAppPlatformPackageAssessmentTaskParamsPlatform(p.Platform),
@@ -163,7 +177,7 @@ func GetAssessment(ctx context.Context, client *ClientWithResponses, p GetAssess
 	return resp, nil
 }
 
-func GetFindings(ctx context.Context, client *ClientWithResponses, task float64) (*[]GetAssessmentTaskFindings_2XX_Item, error) {
+func GetFindings(ctx context.Context, client ClientWithResponsesInterface, task float64) (*[]GetAssessmentTaskFindings_2XX_Item, error) {
 	resp, err := client.GetAssessmentTaskFindingsWithResponse(
 		ctx,
 		task,
