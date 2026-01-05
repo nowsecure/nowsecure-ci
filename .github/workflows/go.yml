@@ -20,11 +20,18 @@ jobs:
         with:
           go-version-file: "./go.mod"
 
-      - name: Test
-        run: go test ./...
-
       - name: Build
         run: go build ./...
+
+      - name: Test
+        run: go test -json ./... > test-results.json
+
+      - name: Test Report
+        uses: dorny/test-reporter@v2
+        if: ${{ !cancelled() }}
+        with:
+          path: test-results.json
+          reporter: golang-json
 
   golangci-lint:
     runs-on: ubuntu-latest
