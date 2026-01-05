@@ -30,6 +30,7 @@ jobs:
         uses: dorny/test-reporter@v2
         if: ${{ !cancelled() }}
         with:
+          name: Go Test
           path: test-results.json
           reporter: golang-json
 
