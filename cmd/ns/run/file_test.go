@@ -28,7 +28,7 @@ func TestByFile(t *testing.T) {
 		config := GetTestConfig(t, doer)
 		appId := uuid.New()
 
-		useSuccessfulBuild(doer, appId, packageName, config.Platform)
+		useSuccessfulBuild(t, doer, appId, packageName, config.Platform)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err = ByFile(ctx, tmpFile.Name(), config)
@@ -40,7 +40,7 @@ func TestByFile(t *testing.T) {
 		config := GetTestConfig(t, doer)
 		config.PollForMinutes = 1
 
-		useSuccessfulBuild(doer, appId, packageName, config.Platform)
+		useSuccessfulBuild(t, doer, appId, packageName, config.Platform)
 
 		assessmentResponse := &GetAssessmentResponse{
 			Application:   &appId,
@@ -52,7 +52,7 @@ func TestByFile(t *testing.T) {
 			AdjustedScore: platformapi.Ptr(float32(85.5)),
 		}
 
-		UseSuccessfulPolling(doer, assessmentResponse)
+		UseSuccessfulPolling(t, doer, assessmentResponse)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err = ByFile(ctx, tmpFile.Name(), config)
@@ -64,7 +64,7 @@ func TestByFile(t *testing.T) {
 		config := GetTestConfig(t, doer)
 		config.PollForMinutes = 2
 
-		useSuccessfulBuild(doer, appId, packageName, config.Platform)
+		useSuccessfulBuild(t, doer, appId, packageName, config.Platform)
 
 		assessmentResponse := &GetAssessmentResponse{
 			Application:   &appId,
@@ -76,7 +76,7 @@ func TestByFile(t *testing.T) {
 			AdjustedScore: platformapi.Ptr(float32(85.5)),
 		}
 
-		UseFlakyPolling(doer, assessmentResponse)
+		UseFlakyPolling(t, doer, assessmentResponse)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err = ByFile(ctx, tmpFile.Name(), config)
@@ -89,7 +89,7 @@ func TestByFile(t *testing.T) {
 		config.PollForMinutes = 2
 		config.MinimumScore = 50
 
-		useSuccessfulBuild(doer, appId, packageName, config.Platform)
+		useSuccessfulBuild(t, doer, appId, packageName, config.Platform)
 
 		assessmentResponse := &GetAssessmentResponse{
 			Application:   &appId,
@@ -101,12 +101,11 @@ func TestByFile(t *testing.T) {
 			AdjustedScore: platformapi.Ptr(float32(5.5)),
 		}
 
-		UseSuccessfulPolling(doer, assessmentResponse)
+		UseSuccessfulPolling(t, doer, assessmentResponse)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err = ByFile(ctx, tmpFile.Name(), config)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "less than the required minimum")
+		require.ErrorContains(t, err, "less than the required minimum")
 	})
 
 	t.Run("Assessment against missing file throws an error", func(t *testing.T) {
@@ -114,7 +113,6 @@ func TestByFile(t *testing.T) {
 		config := GetTestConfig(t, doer)
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err = ByFile(ctx, "/nonexistent/file.apk", config)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
-
 }

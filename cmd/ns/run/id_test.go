@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
@@ -21,14 +22,14 @@ func TestByID(t *testing.T) {
 		doer := &platformapi.TestRequestDoer{}
 		config := GetTestConfig(t, doer)
 
-		useSuccessfulAppList(doer, []platformapi.LabApp{
+		useSuccessfulAppList(t, doer, []platformapi.LabApp{
 			{
 				Package:  packageName,
 				Platform: "android",
 			},
 		})
 
-		useSuccessfulTriggerAssessment(doer, &TriggerAssessmentResponse{
+		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
 			Platform:    config.Platform,
@@ -48,14 +49,14 @@ func TestByID(t *testing.T) {
 		config.PollForMinutes = 1
 		config.MinimumScore = 90
 
-		useSuccessfulAppList(doer, []platformapi.LabApp{
+		useSuccessfulAppList(t, doer, []platformapi.LabApp{
 			{
 				Package:  packageName,
 				Platform: "android",
 			},
 		})
 
-		useSuccessfulTriggerAssessment(doer, &TriggerAssessmentResponse{
+		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
 			Platform:    config.Platform,
@@ -63,7 +64,7 @@ func TestByID(t *testing.T) {
 			Ref:         appID,
 		})
 
-		UseSuccessfulPolling(doer, &GetAssessmentResponse{
+		UseSuccessfulPolling(t, doer, &GetAssessmentResponse{
 			Application:   &appID,
 			Package:       packageName,
 			Platform:      config.Platform,
@@ -82,11 +83,10 @@ func TestByID(t *testing.T) {
 		doer := &platformapi.TestRequestDoer{}
 		config := GetTestConfig(t, doer)
 		appList := []platformapi.LabApp{}
-		useSuccessfulAppList(doer, appList)
+		useSuccessfulAppList(t, doer, appList)
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByID(ctx, appID, config)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "got 0 elements but expected exactly one")
+		require.ErrorContains(t, err, "got 0 elements but expected exactly one")
 	})
 
 	t.Run("Multiple apps returned", func(t *testing.T) {
@@ -97,12 +97,11 @@ func TestByID(t *testing.T) {
 			{Package: "com.example.app2", Platform: "ios"},
 		}
 
-		useSuccessfulAppList(doer, appList)
+		useSuccessfulAppList(t, doer, appList)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByID(ctx, appID, config)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "got 2 elements but expected exactly one")
+		require.ErrorContains(t, err, "got 2 elements but expected exactly one")
 	})
 
 	t.Run("Assessment below minimum score", func(t *testing.T) {
@@ -114,9 +113,9 @@ func TestByID(t *testing.T) {
 		appList := []platformapi.LabApp{
 			{Package: "com.example.app", Platform: "android"},
 		}
-		useSuccessfulAppList(doer, appList)
+		useSuccessfulAppList(t, doer, appList)
 
-		useSuccessfulTriggerAssessment(doer, &TriggerAssessmentResponse{
+		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
 			Platform:    config.Platform,
@@ -124,7 +123,7 @@ func TestByID(t *testing.T) {
 			Ref:         appID,
 		})
 
-		UseSuccessfulPolling(doer, &GetAssessmentResponse{
+		UseSuccessfulPolling(t, doer, &GetAssessmentResponse{
 			Application:   &appID,
 			Package:       packageName,
 			Platform:      config.Platform,
@@ -136,8 +135,6 @@ func TestByID(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByID(ctx, appID, config)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "less than the required minimum")
+		require.ErrorContains(t, err, "less than the required minimum")
 	})
-
 }

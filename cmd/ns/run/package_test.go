@@ -13,12 +13,12 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
 
 func TestByPackage(t *testing.T) {
-
 	appID := uuid.New()
 	packageName := "com.example"
 	completedStatus := platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus("completed")
@@ -27,26 +27,13 @@ func TestByPackage(t *testing.T) {
 		doer := &platformapi.TestRequestDoer{}
 		config := GetTestConfig(t, doer)
 
-		assessmentResponse := struct {
-			Application string
-			Package     string
-			Platform    string
-			Task        float64
-			Ref         string
-		}{
-			Application: appID.String(),
+		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
+			Application: appID,
 			Package:     packageName,
-			Platform:    "android",
+			Platform:    "ios",
 			Task:        12345,
-			Ref:         appID.String(),
-		}
-
-		responseBody, _ := json.Marshal(assessmentResponse)
-		doer.On("Do", mock.Anything).Return(&http.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewReader(responseBody)),
-			Header:     http.Header{"Content-Type": []string{"application/json"}},
-		}, nil)
+			Ref:         appID,
+		})
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByPackage(ctx, packageName, config)
@@ -59,7 +46,7 @@ func TestByPackage(t *testing.T) {
 		config.PollForMinutes = 1
 		config.MinimumScore = 85
 
-		useSuccessfulTriggerAssessment(doer, &TriggerAssessmentResponse{
+		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
 			Platform:    "ios",
@@ -67,7 +54,7 @@ func TestByPackage(t *testing.T) {
 			Ref:         appID,
 		})
 
-		UseSuccessfulPolling(doer, &GetAssessmentResponse{
+		UseSuccessfulPolling(t, doer, &GetAssessmentResponse{
 			Application:   &appID,
 			Package:       "com.example.iosapp",
 			Platform:      "ios",
@@ -88,7 +75,7 @@ func TestByPackage(t *testing.T) {
 		config.PollForMinutes = 1
 		config.MinimumScore = 85
 
-		useSuccessfulTriggerAssessment(doer, &TriggerAssessmentResponse{
+		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
 			Platform:    "ios",
@@ -106,7 +93,7 @@ func TestByPackage(t *testing.T) {
 			AdjustedScore: platformapi.Ptr(float32(85.5)),
 		}
 
-		UseFlakyPolling(doer, pollingResponse)
+		UseFlakyPolling(t, doer, pollingResponse)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByPackage(ctx, packageName, config)
@@ -121,7 +108,7 @@ func TestByPackage(t *testing.T) {
 		config.MinimumScore = 75
 		config.Platform = "ios"
 
-		useSuccessfulTriggerAssessment(doer, &TriggerAssessmentResponse{
+		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
 			Platform:    "ios",
@@ -139,12 +126,11 @@ func TestByPackage(t *testing.T) {
 			AdjustedScore: platformapi.Ptr(float32(25.5)),
 		}
 
-		UseSuccessfulPolling(doer, pollingResponse)
+		UseSuccessfulPolling(t, doer, pollingResponse)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByPackage(ctx, "com.example.iosapp", config)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "less than the required minimum")
+		require.ErrorContains(t, err, "less than the required minimum")
 	})
 
 	t.Run("Trigger assessment error", func(t *testing.T) {
@@ -158,14 +144,13 @@ func TestByPackage(t *testing.T) {
 
 		errorBody, _ := json.Marshal(errorResponse)
 		doer.On("Do", mock.Anything).Return(&http.Response{
-			StatusCode: 404,
+			StatusCode: http.StatusNotFound,
 			Body:       io.NopCloser(bytes.NewReader(errorBody)),
 			Header:     http.Header{"Content-Type": []string{"application/json"}},
 		}, nil)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByPackage(ctx, "com.nonexistent.app", config)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
-
 }

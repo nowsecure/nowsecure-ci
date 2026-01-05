@@ -51,7 +51,7 @@ func GetTestConfig(t *testing.T, doer *platformapi.TestRequestDoer) *internal.Ru
 	return config
 }
 
-func useSuccessfulBuild(doer *platformapi.TestRequestDoer, appId uuid.UUID, packageName, platform string) {
+func useSuccessfulBuild(t *testing.T, doer *platformapi.TestRequestDoer, appId uuid.UUID, packageName, platform string) {
 	uploadResponse := &platformapi.PostBuild2XX1{
 		Application: &appId,
 		Package:     packageName,
@@ -60,12 +60,13 @@ func useSuccessfulBuild(doer *platformapi.TestRequestDoer, appId uuid.UUID, pack
 		Ref:         appId,
 	}
 
-	uploadBody, _ := json.Marshal(uploadResponse)
+	uploadBody, err := json.Marshal(uploadResponse)
+	require.NoError(t, err)
 
 	doer.On("Do", mock.MatchedBy(func(req *http.Request) bool {
-		return req.Method == "POST" && req.URL.Path == "/build"
+		return req.Method == http.MethodPost && req.URL.Path == "/build"
 	})).Return(&http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewReader(uploadBody)),
 		Header:     http.Header{"Content-Type": []string{"application/json"}},
 	}, nil)
@@ -78,8 +79,9 @@ type GetAssessmentResponse struct {
 	Application      *types.UUID                                                         `json:"application"`
 	AppstoreDownload *platformapi.GetAppPlatformPackageAssessmentTask2XXAppstoreDownload `json:"appstore_download"`
 	Binary           *string                                                             `json:"binary"`
-	Cancelled        bool                                                                `json:"cancelled"`
-	Config           struct {
+	//nolint:misspell // Platform API returns this typo, keeping this struct in-line with auto-gen client
+	Cancelled bool `json:"cancelled"`
+	Config    struct {
 		Dynamic interface{} `json:"dynamic"`
 		Static  interface{} `json:"static"`
 	} `json:"config"`
@@ -105,32 +107,37 @@ type GetAssessmentResponse struct {
 	Updated       *time.Time                                                    `json:"updated"`
 }
 
-func UseSuccessfulPolling(doer *platformapi.TestRequestDoer, pollingResponse *GetAssessmentResponse) {
-	assessmentBody, _ := json.Marshal(pollingResponse)
+func UseSuccessfulPolling(t *testing.T, doer *platformapi.TestRequestDoer, pollingResponse *GetAssessmentResponse) {
+	assessmentBody, err := json.Marshal(pollingResponse)
+	require.NoError(t, err)
+
 	bodyReader := bytes.NewReader(assessmentBody)
 	doer.On("Do", mock.MatchedBy(func(req *http.Request) bool {
-		return req.Method == "GET" && strings.Contains(req.URL.Path, "assessment")
+		return req.Method == http.MethodGet && strings.Contains(req.URL.Path, "assessment")
 	})).Run(func(args mock.Arguments) {
-		bodyReader.Seek(0, 0)
+		_, err := bodyReader.Seek(0, 0)
+		require.NoError(t, err)
 	}).Return(&http.Response{
-		StatusCode:    200,
+		StatusCode:    http.StatusOK,
 		Body:          io.NopCloser(bodyReader),
 		Header:        http.Header{"Content-Type": []string{"application/json"}},
 		ContentLength: int64(len(assessmentBody)),
 	}, nil)
 }
 
-func UseFlakyPolling(doer *platformapi.TestRequestDoer, pollingResponse *GetAssessmentResponse) {
+func UseFlakyPolling(t *testing.T, doer *platformapi.TestRequestDoer, pollingResponse *GetAssessmentResponse) {
 	count := 0
 
-	errorBody, _ := json.Marshal(&platformapi.LabRouteError{
+	errorBody, err := json.Marshal(&platformapi.LabRouteError{
 		Description: platformapi.Ptr("Some error"),
 		Message:     platformapi.Ptr("Some message"),
 		Name:        platformapi.Ptr("Some name"),
 		Status:      platformapi.Ptr("500"),
 	})
+	require.NoError(t, err)
+
 	response := http.Response{
-		StatusCode: 500,
+		StatusCode: http.StatusInternalServerError,
 		Body:       io.NopCloser(bytes.NewReader(errorBody)),
 		Header:     http.Header{"Content-Type": []string{"application/json"}},
 	}
@@ -138,13 +145,15 @@ func UseFlakyPolling(doer *platformapi.TestRequestDoer, pollingResponse *GetAsse
 	assessmentBody, _ := json.Marshal(pollingResponse)
 	bodyReader := bytes.NewReader(assessmentBody)
 	doer.On("Do", mock.MatchedBy(func(req *http.Request) bool {
-		return req.Method == "GET" && strings.Contains(req.URL.Path, "assessment")
+		return req.Method == http.MethodGet && strings.Contains(req.URL.Path, "assessment")
 	})).Run(func(args mock.Arguments) {
-		bodyReader.Seek(0, 0)
+		_, err := bodyReader.Seek(0, 0)
+		require.NoError(t, err)
+
 		count++
 		if count > 1 {
 			response = http.Response{
-				StatusCode:    200,
+				StatusCode:    http.StatusOK,
 				Body:          io.NopCloser(bodyReader),
 				Header:        http.Header{"Content-Type": []string{"application/json"}},
 				ContentLength: int64(len(assessmentBody)),
@@ -153,12 +162,13 @@ func UseFlakyPolling(doer *platformapi.TestRequestDoer, pollingResponse *GetAsse
 	}).Return(&response, nil)
 }
 
-func useSuccessfulAppList(doer *platformapi.TestRequestDoer, appList []platformapi.LabApp) {
-	appListBody, _ := json.Marshal(appList)
+func useSuccessfulAppList(t *testing.T, doer *platformapi.TestRequestDoer, appList []platformapi.LabApp) {
+	appListBody, err := json.Marshal(appList)
+	require.NoError(t, err)
 	doer.On("Do", mock.MatchedBy(func(req *http.Request) bool {
-		return req.Method == "GET" && req.URL.Path == "/app"
+		return req.Method == http.MethodGet && req.URL.Path == "/app"
 	})).Return(&http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewReader(appListBody)),
 		Header:     http.Header{"Content-Type": []string{"application/json"}},
 	}, nil)
@@ -172,12 +182,13 @@ type TriggerAssessmentResponse struct {
 	Ref         types.UUID
 }
 
-func useSuccessfulTriggerAssessment(doer *platformapi.TestRequestDoer, mockResponse *TriggerAssessmentResponse) {
-	triggerResponseBody, _ := json.Marshal(mockResponse)
+func useSuccessfulTriggerAssessment(t *testing.T, doer *platformapi.TestRequestDoer, mockResponse *TriggerAssessmentResponse) {
+	triggerResponseBody, err := json.Marshal(mockResponse)
+	require.NoError(t, err)
 	doer.On("Do", mock.MatchedBy(func(req *http.Request) bool {
-		return req.Method == "POST" && strings.Contains(req.URL.Path, "assessment")
+		return req.Method == http.MethodPost && strings.Contains(req.URL.Path, "assessment")
 	})).Return(&http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewReader(triggerResponseBody)),
 		Header:     http.Header{"Content-Type": []string{"application/json"}},
 	}, nil)

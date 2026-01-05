@@ -61,7 +61,7 @@ func pollForResults(ctx context.Context, client platformapi.ClientWithResponsesI
 
 	defer ticker.Stop()
 
-	if resp, err, shouldContinue := checkAssessment(ctx, client, group, packageName, platform, task); !shouldContinue {
+	if resp, shouldContinue, err := checkAssessment(ctx, client, group, packageName, platform, task); !shouldContinue {
 		return resp, err
 	}
 
@@ -70,14 +70,14 @@ func pollForResults(ctx context.Context, client platformapi.ClientWithResponsesI
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-ticker.C:
-			if resp, err, shouldContinue := checkAssessment(ctx, client, group, packageName, platform, task); !shouldContinue {
+			if resp, shouldContinue, err := checkAssessment(ctx, client, group, packageName, platform, task); !shouldContinue {
 				return resp, err
 			}
 		}
 	}
 }
 
-func checkAssessment(ctx context.Context, client platformapi.ClientWithResponsesInterface, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error, bool) {
+func checkAssessment(ctx context.Context, client platformapi.ClientWithResponsesInterface, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, bool, error) {
 	resp, err := platformapi.GetAssessment(ctx, client, platformapi.GetAssessmentParams{
 		Platform:    platform,
 		PackageName: packageName,
@@ -89,11 +89,11 @@ func checkAssessment(ctx context.Context, client platformapi.ClientWithResponses
 			if code, err := labErr.StatusCode(); err == nil {
 				// 5XX errors should retry, otherwise we can fail fast
 				if code >= 500 {
-					return resp, err, true
+					return resp, true, err
 				}
 			}
 		}
-		return resp, err, false
+		return resp, false, err
 	}
 
 	var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
@@ -102,7 +102,7 @@ func checkAssessment(ctx context.Context, client platformapi.ClientWithResponses
 		// A 2XX indicates a finalized assessment but not necessarily the findings or score being calculated
 		if *resp.JSON2XX.TaskStatus == completed && resp.JSON2XX.AdjustedScore != nil {
 			zerolog.Ctx(ctx).Debug().Msg("Polling complete")
-			return resp, nil, false
+			return resp, false, nil
 		}
 
 		// "nil" in case TaskErrorCode (an optional field) isn't set
@@ -113,10 +113,10 @@ func checkAssessment(ctx context.Context, client platformapi.ClientWithResponses
 
 		if *resp.JSON2XX.TaskStatus == failed {
 			zerolog.Ctx(ctx).Debug().Msg("Polling complete")
-			return nil, fmt.Errorf("assessment failed with %v error code", errorCode), false
+			return nil, false, fmt.Errorf("assessment failed with %v error code", errorCode)
 		}
 	}
-	return nil, nil, true
+	return nil, true, nil
 }
 
 func isAboveMinimum(taskResponse *platformapi.GetAppPlatformPackageAssessmentTaskResponse, threshold int) bool {
