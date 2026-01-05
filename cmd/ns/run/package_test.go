@@ -30,7 +30,7 @@ func TestByPackage(t *testing.T) {
 		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
-			Platform:    "ios",
+			Platform:    config.Platform,
 			Task:        12345,
 			Ref:         appID,
 		})
@@ -49,15 +49,15 @@ func TestByPackage(t *testing.T) {
 		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
-			Platform:    "ios",
+			Platform:    config.Platform,
 			Task:        12345,
 			Ref:         appID,
 		})
 
 		UseSuccessfulPolling(t, doer, &GetAssessmentResponse{
 			Application:   &appID,
-			Package:       "com.example.iosapp",
-			Platform:      "ios",
+			Package:       packageName,
+			Platform:      config.Platform,
 			Task:          12345,
 			Ref:           appID,
 			TaskStatus:    &completedStatus,
@@ -78,15 +78,15 @@ func TestByPackage(t *testing.T) {
 		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
-			Platform:    "ios",
+			Platform:    config.Platform,
 			Task:        12345,
 			Ref:         appID,
 		})
 
 		pollingResponse := &GetAssessmentResponse{
 			Application:   &appID,
-			Package:       "com.example.iosapp",
-			Platform:      "ios",
+			Package:       packageName,
+			Platform:      config.Platform,
 			Task:          12345,
 			Ref:           appID,
 			TaskStatus:    &completedStatus,
@@ -111,15 +111,15 @@ func TestByPackage(t *testing.T) {
 		useSuccessfulTriggerAssessment(t, doer, &TriggerAssessmentResponse{
 			Application: appID,
 			Package:     packageName,
-			Platform:    "ios",
+			Platform:    config.Platform,
 			Task:        12345,
 			Ref:         appID,
 		})
 
 		pollingResponse := &GetAssessmentResponse{
 			Application:   &appID,
-			Package:       "com.example.iosapp",
-			Platform:      "ios",
+			Package:       packageName,
+			Platform:      config.Platform,
 			Task:          12345,
 			Ref:           appID,
 			TaskStatus:    &completedStatus,
@@ -129,7 +129,7 @@ func TestByPackage(t *testing.T) {
 		UseSuccessfulPolling(t, doer, pollingResponse)
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
-		err := ByPackage(ctx, "com.example.iosapp", config)
+		err := ByPackage(ctx, packageName, config)
 		require.ErrorContains(t, err, "less than the required minimum")
 	})
 
