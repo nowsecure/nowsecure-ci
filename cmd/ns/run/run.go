@@ -95,27 +95,29 @@ func checkAssessment(ctx context.Context, client platformapi.ClientWithResponses
 		}
 		return resp, false, err
 	}
-
-    completed := platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus("completed")
-	failed := platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus("failed")
-	if resp.StatusCode() == 200 {
-		// A 2XX indicates a finalized assessment but not necessarily the findings or score being calculated
-		if *resp.JSON2XX.TaskStatus == completed && resp.JSON2XX.AdjustedScore != nil {
-			zerolog.Ctx(ctx).Debug().Msg("Polling complete")
-			return resp, false, nil
-		}
-
-		// "nil" in case TaskErrorCode (an optional field) isn't set
-		errorCode := "nil"
-		if resp.JSON2XX.TaskErrorCode != nil {
-			errorCode = *resp.JSON2XX.TaskErrorCode
-		}
-
-		if *resp.JSON2XX.TaskStatus == failed {
-			zerolog.Ctx(ctx).Debug().Msg("Polling complete")
-			return nil, false, fmt.Errorf("assessment failed with %v error code", errorCode)
-		}
+	if resp.StatusCode() != 200 {
+		return nil, true, nil
 	}
+
+	completed := platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus("completed")
+	failed := platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus("failed")
+	// A 2XX indicates a finalized assessment but not necessarily the findings or score being calculated
+	if *resp.JSON2XX.TaskStatus == completed && resp.JSON2XX.AdjustedScore != nil {
+		zerolog.Ctx(ctx).Debug().Msg("Polling complete")
+		return resp, false, nil
+	}
+
+	// "nil" in case TaskErrorCode (an optional field) isn't set
+	errorCode := "nil"
+	if resp.JSON2XX.TaskErrorCode != nil {
+		errorCode = *resp.JSON2XX.TaskErrorCode
+	}
+
+	if *resp.JSON2XX.TaskStatus == failed {
+		zerolog.Ctx(ctx).Debug().Msg("Polling complete")
+		return nil, false, fmt.Errorf("assessment failed with %v error code", errorCode)
+	}
+
 	return nil, true, nil
 }
 
