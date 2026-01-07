@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
@@ -32,7 +31,7 @@ func TestByFile(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err = ByFile(ctx, tmpFile.Name(), config)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Successful assessment with polling", func(t *testing.T) {
@@ -56,7 +55,7 @@ func TestByFile(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err = ByFile(ctx, tmpFile.Name(), config)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Successful assessment with flaky API", func(t *testing.T) {
@@ -80,7 +79,7 @@ func TestByFile(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err = ByFile(ctx, tmpFile.Name(), config)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Assessment below minimum score throws an error", func(t *testing.T) {

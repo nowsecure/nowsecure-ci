@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
@@ -39,7 +38,7 @@ func TestByID(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByID(ctx, appID, config)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Successful assessment with polling", func(t *testing.T) {
@@ -76,7 +75,7 @@ func TestByID(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByID(ctx, appID, config)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("App not found", func(t *testing.T) {

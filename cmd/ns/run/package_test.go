@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -37,7 +36,7 @@ func TestByPackage(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByPackage(ctx, packageName, config)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Successful assessment with polling", func(t *testing.T) {
@@ -66,7 +65,7 @@ func TestByPackage(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByPackage(ctx, packageName, config)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Successful assessment with flaky polling", func(t *testing.T) {
@@ -97,7 +96,7 @@ func TestByPackage(t *testing.T) {
 
 		ctx := zerolog.New(os.Stdout).WithContext(context.Background())
 		err := ByPackage(ctx, packageName, config)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Assessment below minimum score", func(t *testing.T) {
