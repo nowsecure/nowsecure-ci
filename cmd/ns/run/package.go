@@ -75,9 +75,10 @@ func ByPackage(ctx context.Context, packageName string, config *internal.RunConf
 		return w.Write(response.JSON2XX)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
+	ticker := time.NewTicker(1 * config.PollingInterval)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*config.PollingInterval)
 	defer cancel()
-	taskResponse, err := pollForResults(ctx, client, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task))
+	taskResponse, err := pollForResults(ctx, client, ticker, config.Group, response.JSON2XX.Package, response.JSON2XX.Platform, float64(response.JSON2XX.Task))
 	if err != nil {
 		return err
 	}

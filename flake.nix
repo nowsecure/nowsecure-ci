@@ -80,6 +80,9 @@
               pkgs.gci
               pkgs.golangci-lint
               pkgs.typos
+              pkgs.gotestsum
+              pkgs.markdownlint-cli
+              pkgs.gocover-cobertura
 
               # Shell script helpers
               self.packages.${system}.checks

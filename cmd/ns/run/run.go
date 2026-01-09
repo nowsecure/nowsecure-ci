@@ -47,7 +47,6 @@ func RunCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfig
 		zerolog.Ctx(ctx).Panic().Err(errs).Msg("Failed binding run level flags")
 	}
 
-	// Pass each run command a run config built in RunCommand's persistent pre run step
 	runCmd.AddCommand(
 		FileCommand(v, config),
 		IDCommand(v, config),
@@ -57,56 +56,69 @@ func RunCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfig
 	return runCmd
 }
 
-func pollForResults(ctx context.Context, client platformapi.ClientWithResponsesInterface, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
+func pollForResults(ctx context.Context, client platformapi.ClientWithResponsesInterface, ticker *time.Ticker, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, error) {
 	zerolog.Ctx(ctx).Debug().Msg("Polling started")
 
-	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
+
+	if resp, shouldContinue, err := checkAssessment(ctx, client, group, packageName, platform, task); !shouldContinue {
+		return resp, err
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-ticker.C:
-			resp, err := platformapi.GetAssessment(ctx, client, platformapi.GetAssessmentParams{
-				Platform:    platform,
-				PackageName: packageName,
-				TaskId:      task,
-				Group:       group,
-			})
-			if err != nil {
-				if labErr, ok := err.(*platformapi.LabRouteError); ok {
-					if code, err := labErr.StatusCode(); err == nil {
-						// 5XX errors should retry, otherwise we can fail fast
-						if code >= 500 {
-							continue
-						}
-					}
-				}
+			if resp, shouldContinue, err := checkAssessment(ctx, client, group, packageName, platform, task); !shouldContinue {
 				return resp, err
-			}
-
-			var completed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "completed"
-			var failed platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus = "failed"
-			if resp.StatusCode() == 200 {
-				// A 2XX indicates a finalized assessment but not necessarily the findings or score being calculated
-				if *resp.JSON2XX.TaskStatus == completed && resp.JSON2XX.AdjustedScore != nil {
-					zerolog.Ctx(ctx).Debug().Msg("Polling complete")
-					return resp, nil
-				}
-
-				errorCode := "nil"
-				if resp.JSON2XX.TaskErrorCode != nil {
-					errorCode = *resp.JSON2XX.TaskErrorCode
-				}
-
-				if *resp.JSON2XX.TaskStatus == failed {
-					zerolog.Ctx(ctx).Debug().Msg("Polling complete")
-					return nil, fmt.Errorf("assessment failed with %v error code", errorCode)
-				}
 			}
 		}
 	}
+}
+
+func checkAssessment(ctx context.Context, client platformapi.ClientWithResponsesInterface, group types.UUID, packageName, platform string, task float64) (*platformapi.GetAppPlatformPackageAssessmentTaskResponse, bool, error) {
+	resp, err := platformapi.GetAssessment(ctx, client, platformapi.GetAssessmentParams{
+		Platform:    platform,
+		PackageName: packageName,
+		TaskId:      task,
+		Group:       group,
+	})
+	if err != nil {
+		if labErr, ok := err.(*platformapi.LabRouteError); ok {
+			if code, err := labErr.StatusCode(); err == nil {
+				// 5XX errors should retry, otherwise we can fail fast
+				if code >= 500 {
+					return resp, true, err
+				}
+			}
+		}
+		return resp, false, err
+	}
+	if resp.StatusCode() != 200 {
+		return nil, true, nil
+	}
+
+	completed := platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus("completed")
+	failed := platformapi.GetAppPlatformPackageAssessmentTask2XXTaskStatus("failed")
+	// A 2XX indicates a finalized assessment but not necessarily the findings or score being calculated
+	if *resp.JSON2XX.TaskStatus == completed && resp.JSON2XX.AdjustedScore != nil {
+		zerolog.Ctx(ctx).Debug().Msg("Polling complete")
+		return resp, false, nil
+	}
+
+	// "nil" in case TaskErrorCode (an optional field) isn't set
+	errorCode := "nil"
+	if resp.JSON2XX.TaskErrorCode != nil {
+		errorCode = *resp.JSON2XX.TaskErrorCode
+	}
+
+	if *resp.JSON2XX.TaskStatus == failed {
+		zerolog.Ctx(ctx).Debug().Msg("Polling complete")
+		return nil, false, fmt.Errorf("assessment failed with %v error code", errorCode)
+	}
+
+	return nil, true, nil
 }
 
 func isAboveMinimum(taskResponse *platformapi.GetAppPlatformPackageAssessmentTaskResponse, threshold int) bool {

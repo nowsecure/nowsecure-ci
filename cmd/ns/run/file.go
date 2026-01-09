@@ -67,9 +67,10 @@ func ByFile(ctx context.Context, fileName string, config *internal.RunConfig) er
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*time.Minute)
+	ticker := time.NewTicker(1 * config.PollingInterval)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(config.PollForMinutes)*config.PollingInterval)
 	defer cancel()
-	taskResponse, err := pollForResults(ctx, client, config.Group, buildResponse.Package, buildResponse.Platform, buildResponse.Task)
+	taskResponse, err := pollForResults(ctx, client, ticker, config.Group, buildResponse.Package, buildResponse.Platform, buildResponse.Task)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -30,6 +31,7 @@ type RunConfig struct {
 	BaseConfig
 	AnalysisType         string
 	PollForMinutes       int
+	PollingInterval      time.Duration
 	MinimumScore         int
 	Platform             string
 	FindingsArtifactPath string
@@ -132,6 +134,7 @@ func NewRunConfig(v *viper.Viper) (*RunConfig, error) {
 		AnalysisType:         v.GetString("analysis_type"),
 		FindingsArtifactPath: findingsArtifactPath,
 		PollForMinutes:       v.GetInt("poll_for_minutes"),
+		PollingInterval:      time.Minute,
 		MinimumScore:         v.GetInt("minimum_score"),
 		Platform:             platform,
 	}, nil

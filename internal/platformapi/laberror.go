@@ -21,7 +21,7 @@ func (w *LabRouteError) ExitCode() int {
 func (w *LabRouteError) StatusCode() (int, error) {
 	if w.Status != nil {
 		i, err := strconv.Atoi(*w.Status)
-		if err != nil {
+		if err == nil {
 			return i, nil
 		}
 		return 0, err
