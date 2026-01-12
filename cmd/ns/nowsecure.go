@@ -27,11 +27,14 @@ func RootCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfi
 			v.AutomaticEnv()
 			v.SetConfigType("yaml")
 			v.SetConfigName(".ns-ci")
-			err := readConfigFile(v)
 
-			if err != nil {
-				zerolog.Ctx(ctx).Debug().Err(err).Msg("Error reading from config file")
-				return err
+			if err := readConfigFile(v); err != nil {
+				if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+					zerolog.Ctx(ctx).Debug().Msg("No config file found")
+				} else {
+					zerolog.Ctx(ctx).Debug().Err(err).Msg("Error reading from config file")
+					return err
+				}
 			}
 
 			baseConfig, err := internal.NewBaseConfig(v)

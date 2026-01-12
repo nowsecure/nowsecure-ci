@@ -101,7 +101,7 @@ func TestCommandFromFlags(t *testing.T) {
 	t.Run("Log level and verbose cannot both be set", func(t *testing.T) {
 		v, config, ctx := setupTest(t)
 		rootCmd := RootCommand(ctx, v, config)
-		_, _, err := executeCommandC(rootCmd, "--verbose", "--log-level", "debug", "help")
+		_, _, err := executeCommandC(rootCmd, "--token", "some-token", "--verbose", "--log-level", "debug", "help")
 		require.ErrorContains(t, err, "if any flags in the group [log-level verbose] are set none of the others can be")
 	})
 
