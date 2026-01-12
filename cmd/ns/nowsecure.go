@@ -38,7 +38,7 @@ func RootCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfi
 			if err != nil {
 				return err
 			}
-			config = baseConfig
+			*config = *baseConfig
 
 			return nil
 		},
