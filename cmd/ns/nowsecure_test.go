@@ -3,8 +3,10 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/google/uuid"
@@ -14,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/nowsecure/nowsecure-ci/cmd/ns/version"
 	"github.com/nowsecure/nowsecure-ci/internal"
 	"github.com/nowsecure/nowsecure-ci/internal/output"
 )
@@ -46,6 +49,8 @@ func TestCommandFromFlags(t *testing.T) {
 	outputPath := "./some-output"
 	outputFormat := "json"
 	uiHost := "https://localhost:8081"
+	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	userAgentBase := fmt.Sprintf("nowsecure-ci/%s (%s)", version.Version(), platformInfo)
 
 	t.Run("Long base flags bind correctly", func(t *testing.T) {
 		args := []string{
@@ -80,12 +85,17 @@ func TestCommandFromFlags(t *testing.T) {
 		assert.Equal(t, output.JSON, config.OutputFormat)
 		assert.Equal(t, outputPath, config.Output)
 		assert.Equal(t, uiHost, config.UIHost)
+		assert.Equal(t, fmt.Sprintf("%s %s", userAgentBase, ciEnv), config.UserAgent)
 	})
 
 	t.Run("Short base flags bind correctly", func(t *testing.T) {
 		args := []string{
-			"-o", outputPath,
+			"--token",
+			"some-token",
+			"-o",
+			outputPath,
 			"-v",
+			"help",
 		}
 
 		v, config, ctx := setupTest(t)
@@ -96,6 +106,7 @@ func TestCommandFromFlags(t *testing.T) {
 
 		assert.Equal(t, outputPath, v.GetString("output"))
 		assert.True(t, v.GetBool("verbose"))
+		assert.Equal(t, userAgentBase, config.UserAgent)
 	})
 
 	t.Run("Log level and verbose cannot both be set", func(t *testing.T) {
@@ -122,6 +133,8 @@ func TestCommandFromEnvVars(t *testing.T) {
 	outputPath := "./some-output"
 	outputFormat := "json"
 	uiHost := "https://localhost:8081"
+	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	userAgentBase := fmt.Sprintf("nowsecure-ci/%s (%s)", version.Version(), platformInfo)
 
 	t.Run("Base envvars bind correctly", func(t *testing.T) {
 		v, config, ctx := setupTest(t)
@@ -160,6 +173,7 @@ func TestCommandFromEnvVars(t *testing.T) {
 		assert.Equal(t, uiHost, config.UIHost)
 		assert.Equal(t, groupRef.String(), config.Group.String())
 		assert.Equal(t, logLevel, config.LogLevel.String())
+		assert.Equal(t, fmt.Sprintf("%s %s", userAgentBase, ciEnv), config.UserAgent)
 	})
 
 	t.Run("Invalid config path throws error", func(t *testing.T) {
@@ -190,6 +204,8 @@ func TestCommandFromConfig(t *testing.T) {
 	outputPath := "./some-output"
 	outputFormat := "json"
 	uiHost := "https://localhost:8081"
+	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	userAgentBase := fmt.Sprintf("nowsecure-ci/%s (%s)", version.Version(), platformInfo)
 
 	t.Run("Base config file bind correctly", func(t *testing.T) {
 		configContent := map[string]string{
@@ -226,6 +242,7 @@ func TestCommandFromConfig(t *testing.T) {
 		assert.Equal(t, outputPath, v.GetString("output"))
 		assert.Equal(t, outputFormat, v.GetString("output_format"))
 		assert.Equal(t, uiHost, v.GetString("ui_host"))
+		assert.Equal(t, fmt.Sprintf("%s %s", userAgentBase, ciEnv), config.UserAgent)
 
 		assert.Equal(t, uiHost, config.UIHost)
 		assert.Equal(t, groupRef.String(), config.Group.String())
