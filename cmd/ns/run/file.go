@@ -17,9 +17,32 @@ import (
 
 func FileCommand(v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
 	return &cobra.Command{
-		Use:       "file [./file-path]",
-		Short:     "Upload and run an assessment for a specified binary file",
-		Long:      ``,
+		Use:   "file [./file-path]",
+		Short: "Upload and run an assessment for a specified binary file",
+		Example: `# Recommended Flags
+ns run file ./path/to/binary \
+  --group-ref YOUR_GROUP_UUID \
+  --analysis-type static \
+  --poll-for-minutes 30
+
+# Run an Assessment Without Waiting for Results
+ns run file ./path/to/binary \
+  --group-ref YOUR_GROUP_UUID \
+  --poll-for-minutes 0
+
+# Run a Full (Dynamic and Static) Assessment
+ns run file ./path/to/binary \
+  --analysis-type full \
+  --group-ref YOUR_GROUP_UUID \
+  --poll-for-minutes 60
+
+# Run an Assessment With a Score Threshold
+ns run file ./path/to/binary \
+  --analysis-type static \
+  --minimum-score 70 \
+  --poll-for-minutes 60 \
+  --group-ref YOUR_GROUP_UUID
+`,
 		ValidArgs: []string{"file"},
 		Args:      cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

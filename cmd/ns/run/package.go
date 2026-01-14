@@ -17,9 +17,36 @@ import (
 
 func PackageCommand(c context.Context, v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
 	var packageCmd = &cobra.Command{
-		Use:       "package [package-name]",
-		Short:     "Run an assessment for a pre-existing app by specifying package and platform",
-		Long:      ``,
+		Use:   "package [package-name]",
+		Short: "Run an assessment for a pre-existing app by specifying package and platform",
+		Example: `# Recommended Flags
+ns run package [package-name] \
+  --android \
+  --group-ref YOUR_GROUP_UUID \
+  --analysis-type static \
+  --poll-for-minutes 30
+
+# Run an Assessment Without Waiting for Results
+ns run package [package-name] \
+  --android \
+  --group-ref YOUR_GROUP_UUID \
+  --poll-for-minutes 0
+
+# Run a Full (Dynamic and Static) Assessment
+ns run package [package-name] \
+  --android \
+  --analysis-type full \
+  --group-ref YOUR_GROUP_UUID \
+  --poll-for-minutes 60
+
+# Run an Assessment With a Score Threshold
+ns run package [package-name] \
+  --android \
+  --analysis-type static \
+  --minimum-score 70 \
+  --poll-for-minutes 60 \
+  --group-ref YOUR_GROUP_UUID
+`,
 		ValidArgs: []string{"packageName"},
 		Args:      cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

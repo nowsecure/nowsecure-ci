@@ -19,7 +19,6 @@ func RootCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfi
 		Use:           "ns",
 		Short:         "NowSecure command line tool to interact with NowSecure Platform",
 		Version:       version.Version(),
-		Long:          ``,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
