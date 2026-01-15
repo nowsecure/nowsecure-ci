@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
+	"github.com/nowsecure/nowsecure-ci/cmd/ns/version"
 	"github.com/nowsecure/nowsecure-ci/internal/output"
 	"github.com/nowsecure/nowsecure-ci/internal/platformapi"
 )
@@ -25,6 +26,7 @@ type BaseConfig struct {
 	LogLevel       zerolog.Level
 	Output         string
 	OutputFormat   output.Formats
+	UserAgent      string
 }
 
 type RunConfig struct {
@@ -77,7 +79,7 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 		}
 	}
 	platformInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
-	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", "0.2.0", platformInfo, v.GetString("ci_environment")))
+	userAgent := strings.TrimSpace(fmt.Sprintf("nowsecure-ci/%s (%s) %s", version.Version(), platformInfo, v.GetString("ci_environment")))
 
 	platformClient, err := platformapi.ClientFromConfig(platformapi.Config{
 		Host:      APIHost,
@@ -95,6 +97,7 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 		LogLevel:       logLevel,
 		Output:         v.GetString("output"),
 		OutputFormat:   format,
+		UserAgent:      userAgent,
 	}, nil
 }
 
