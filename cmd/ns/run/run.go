@@ -23,12 +23,18 @@ func RunCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfig
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run an assessment for a given application",
-		Long:  ``,
 	}
 
-	dir, err := os.Getwd()
+	pwd, err := os.Getwd()
 	if err != nil {
 		zerolog.Ctx(ctx).Panic().Err(err).Msg("Failed to get present working directory")
+	}
+
+	var dir string
+	if config.Output != "" {
+		dir = "$PWD"
+	} else {
+		dir = pwd
 	}
 
 	runCmd.PersistentFlags().String("analysis-type", "full", "One of: full, static, sbom")

@@ -17,9 +17,32 @@ import (
 
 func IDCommand(v *viper.Viper, config *internal.BaseConfig) *cobra.Command {
 	var idCmd = &cobra.Command{
-		Use:       "id [app-id]",
-		Short:     "Run an assessment for a pre-existing app by specifying app-id",
-		Long:      ``,
+		Use:   "id [app-id]",
+		Short: "Run an assessment for a pre-existing app by specifying app-id",
+		Example: `# Common flags
+ns run id [app-id] \
+  --group-ref YOUR_GROUP_UUID \
+  --analysis-type static \
+  --poll-for-minutes 30
+
+# Run an assessment without waiting for results
+ns run id [app-id] \
+  --group-ref YOUR_GROUP_UUID \
+  --poll-for-minutes 0
+
+# Run a full (dynamic and static) assessment
+ns run id [app-id] \
+  --analysis-type full \
+  --group-ref YOUR_GROUP_UUID \
+  --poll-for-minutes 60
+
+# Run an assessment with a score threshold
+ns run id [app-id] \
+  --analysis-type static \
+  --minimum-score 70 \
+  --poll-for-minutes 60 \
+  --group-ref YOUR_GROUP_UUID
+`,
 		ValidArgs: []string{"appId"},
 		Args:      cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
