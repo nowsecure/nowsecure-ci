@@ -9,24 +9,24 @@ ns run file [./file-path] [flags]
 ### Examples
 
 ```
-# Recommended Flags
+# Common flags
 ns run file ./path/to/binary \
   --group-ref YOUR_GROUP_UUID \
   --analysis-type static \
   --poll-for-minutes 30
 
-# Run an Assessment Without Waiting for Results
+# Run an assessment without waiting for results
 ns run file ./path/to/binary \
   --group-ref YOUR_GROUP_UUID \
   --poll-for-minutes 0
 
-# Run a Full (Dynamic and Static) Assessment
+# Run a full (dynamic and static) assessment
 ns run file ./path/to/binary \
   --analysis-type full \
   --group-ref YOUR_GROUP_UUID \
   --poll-for-minutes 60
 
-# Run an Assessment With a Score Threshold
+# Run an assessment with a score threshold
 ns run file ./path/to/binary \
   --analysis-type static \
   --minimum-score 70 \

@@ -9,24 +9,24 @@ ns run id [app-id] [flags]
 ### Examples
 
 ```
-# Recommended Flags
+# Common flags
 ns run id [app-id] \
   --group-ref YOUR_GROUP_UUID \
   --analysis-type static \
   --poll-for-minutes 30
 
-# Run an Assessment Without Waiting for Results
+# Run an assessment without waiting for results
 ns run id [app-id] \
   --group-ref YOUR_GROUP_UUID \
   --poll-for-minutes 0
 
-# Run a Full (Dynamic and Static) Assessment
+# Run a full (dynamic and static) assessment
 ns run id [app-id] \
   --analysis-type full \
   --group-ref YOUR_GROUP_UUID \
   --poll-for-minutes 60
 
-# Run an Assessment With a Score Threshold
+# Run an assessment with a score threshold
 ns run id [app-id] \
   --analysis-type static \
   --minimum-score 70 \

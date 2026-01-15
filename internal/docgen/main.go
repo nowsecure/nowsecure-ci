@@ -16,7 +16,7 @@ import (
 	"github.com/nowsecure/nowsecure-ci/internal"
 )
 
-// go run ./internal/tools/docgen -out ./docs/cli -format markdown
+// go run ./internal/docgen -out ./docs/cli -format markdown
 func main() {
 	out := flag.String("out", "./docs/cli", "output directory")
 	format := flag.String("format", "markdown", "markdown|man|rest")

@@ -19,27 +19,27 @@ func PackageCommand(c context.Context, v *viper.Viper, config *internal.BaseConf
 	var packageCmd = &cobra.Command{
 		Use:   "package [package-name]",
 		Short: "Run an assessment for a pre-existing app by specifying package and platform",
-		Example: `# Recommended Flags
+		Example: `# Common flags
 ns run package [package-name] \
   --android \
   --group-ref YOUR_GROUP_UUID \
   --analysis-type static \
   --poll-for-minutes 30
 
-# Run an Assessment Without Waiting for Results
+# Run an assessment without waiting for results
 ns run package [package-name] \
   --android \
   --group-ref YOUR_GROUP_UUID \
   --poll-for-minutes 0
 
-# Run a Full (Dynamic and Static) Assessment
+# Run a full (dynamic and static) assessment
 ns run package [package-name] \
   --android \
   --analysis-type full \
   --group-ref YOUR_GROUP_UUID \
   --poll-for-minutes 60
 
-# Run an Assessment With a Score Threshold
+# Run an assessment with a score threshold
 ns run package [package-name] \
   --android \
   --analysis-type static \
