@@ -61,6 +61,13 @@
               typos && echo "0 issues."
             '';
           };
+          test-release = pkgs.writeShellApplication {
+            name = "test-release";
+            runtimeInputs = [
+              pkgs.goreleaser
+            ];
+            text = "goreleaser release --snapshot --clean";
+          };
         }
       );
 
@@ -83,10 +90,12 @@
               pkgs.gotestsum
               pkgs.markdownlint-cli
               pkgs.gocover-cobertura
+              pkgs.goreleaser
 
               # Shell script helpers
               self.packages.${system}.checks
               self.packages.${system}.format
+              self.packages.${system}.test-release
 
               # Other
               pkgs.nixpkgs-fmt
