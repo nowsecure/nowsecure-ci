@@ -11,7 +11,7 @@ builds:
       - windows
       - darwin
     ldflags:
-      - "-w -s -X 'github.com/nowsecure/nowsecure-ci/cmd/ns/version.version=${{ .Version }}'"
+      - "-w -s -X 'github.com/nowsecure/nowsecure-ci/cmd/ns/version.version={{ .Version }}'"
     # name template for the binaries
     binary: >-
       ns_{{ .Os }}-{{ .Arch }}
