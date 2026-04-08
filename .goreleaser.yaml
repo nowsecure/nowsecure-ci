@@ -38,6 +38,17 @@ nfpms:
       - deb
       - rpm
 
+signs:
+  - cmd: quill
+    args:
+      - sign-and-notarize
+      - "${artifact}"
+      - --dry-run={{ .IsSnapshot }}
+      - --ad-hoc={{ .IsSnapshot }}
+      - -vv
+    artifacts: binary
+    output: true
+
 changelog:
   sort: asc
 
