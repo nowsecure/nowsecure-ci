@@ -30,7 +30,7 @@ jobs:
         run: go test -json ./... > test-results.json
 
       - name: Test Report
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         if: ${{ !cancelled() }}
         with:
           name: Go Test
