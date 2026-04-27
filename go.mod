@@ -4,8 +4,8 @@ go 1.24.2
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/oapi-codegen/runtime v1.3.1
-	github.com/rs/zerolog v1.35.0
+	github.com/oapi-codegen/runtime v1.4.0
+	github.com/rs/zerolog v1.35.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -32,6 +32,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 )
