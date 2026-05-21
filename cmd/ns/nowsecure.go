@@ -47,7 +47,7 @@ func RootCommand(ctx context.Context, v *viper.Viper, config *internal.BaseConfi
 	}
 
 	rootCmd.PersistentFlags().StringP("config", "c", "", "config file path")
-	rootCmd.PersistentFlags().String("api-host", "https://lab-api.nowsecure.com", "REST API base url")
+	rootCmd.PersistentFlags().String("api-host", "https://api.nowsecure.com", "REST API base url")
 	rootCmd.PersistentFlags().String("ui-host", "https://app.nowsecure.com", "UI base url")
 	rootCmd.PersistentFlags().String("token", "", "auth token for REST API")
 	rootCmd.PersistentFlags().String("group-ref", "", "group uuid with which to run assessments")

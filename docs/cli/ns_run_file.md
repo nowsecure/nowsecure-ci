@@ -45,7 +45,7 @@ ns run file ./path/to/binary \
 
 ```
       --analysis-type string    One of: full, static, sbom (default "full")
-      --api-host string         REST API base url (default "https://lab-api.nowsecure.com")
+      --api-host string         REST API base url (default "https://api.nowsecure.com")
       --artifacts-dir string    directory in which to put artifacts (default "$PWD")
       --ci-environment string   appended to the user_agent header
   -c, --config string           config file path
