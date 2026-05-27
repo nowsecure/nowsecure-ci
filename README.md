@@ -83,7 +83,7 @@ The tool provides three methods to run security assessments:
 
 #### API Configuration
 
-- `--api-host` - REST API base URL (default: `https://lab-api.nowsecure.com`)
+- `--api-host` - REST API base URL (default: `https://api.nowsecure.com`)
   - Use this to point to a different NowSecure endpoint if you are accessing a single tenant instance
   
 - `--ui-host` - UI base URL (default: `https://app.nowsecure.com`)

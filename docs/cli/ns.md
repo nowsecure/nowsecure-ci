@@ -5,7 +5,7 @@ NowSecure command line tool to interact with NowSecure Platform
 ### Options
 
 ```
-      --api-host string         REST API base url (default "https://lab-api.nowsecure.com")
+      --api-host string         REST API base url (default "https://api.nowsecure.com")
       --ci-environment string   appended to the user_agent header
   -c, --config string           config file path
       --group-ref string        group uuid with which to run assessments
