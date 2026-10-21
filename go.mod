@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/oapi-codegen/runtime v1.4.0
+	github.com/oapi-codegen/runtime v1.4.1
 	github.com/rs/zerolog v1.35.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
