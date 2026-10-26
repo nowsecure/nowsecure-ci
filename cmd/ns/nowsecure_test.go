@@ -122,6 +122,27 @@ func TestCommandFromFlags(t *testing.T) {
 		_, _, err := executeCommandC(rootCmd, "--config", "./some/bad/path", "help")
 		require.ErrorContains(t, err, "no such file or directory")
 	})
+
+	t.Run("Non NowSecure api host is rejected", func(t *testing.T) {
+		v, config, ctx := setupTest(t)
+		rootCmd := RootCommand(ctx, v, config)
+		_, _, err := executeCommandC(rootCmd, "--token", token, "--api-host", "https://evil.example", "help")
+		require.ErrorContains(t, err, "invalid api_host")
+	})
+
+	t.Run("Plain http api host is rejected", func(t *testing.T) {
+		v, config, ctx := setupTest(t)
+		rootCmd := RootCommand(ctx, v, config)
+		_, _, err := executeCommandC(rootCmd, "--token", token, "--api-host", "http://api.nowsecure.com", "help")
+		require.ErrorContains(t, err, "invalid api_host")
+	})
+
+	t.Run("Non NowSecure ui host is rejected", func(t *testing.T) {
+		v, config, ctx := setupTest(t)
+		rootCmd := RootCommand(ctx, v, config)
+		_, _, err := executeCommandC(rootCmd, "--token", token, "--ui-host", "https://evil.example", "help")
+		require.ErrorContains(t, err, "invalid ui_host")
+	})
 }
 
 func TestCommandFromEnvVars(t *testing.T) {
@@ -247,5 +268,83 @@ func TestCommandFromConfig(t *testing.T) {
 		assert.Equal(t, uiHost, config.UIHost)
 		assert.Equal(t, groupRef.String(), config.Group.String())
 		assert.Equal(t, logLevel, config.LogLevel.String())
+	})
+
+	writeConfig := func(t *testing.T, dir string, content map[string]string) string {
+		data, err := yaml.Marshal(content)
+		require.NoError(t, err)
+
+		configFile := filepath.Join(dir, ".ns-ci.yaml")
+		require.NoError(t, os.WriteFile(configFile, data, 0o600))
+
+		return configFile
+	}
+
+	for _, key := range []string{"api_host", "ui_host"} {
+		t.Run(fmt.Sprintf("Working directory config cannot set %s", key), func(t *testing.T) {
+			workDir := t.TempDir()
+			writeConfig(t, workDir, map[string]string{"token": token, key: "https://evil.example"})
+			t.Chdir(workDir)
+			t.Setenv("HOME", t.TempDir())
+
+			v, config, ctx := setupTest(t)
+			rootCmd := RootCommand(ctx, v, config)
+			_, _, err := executeCommandC(rootCmd, "help")
+
+			require.ErrorContains(t, err, fmt.Sprintf("%s may not be set in a config file discovered in the working directory", key))
+		})
+	}
+
+	t.Run("Working directory config can set other keys", func(t *testing.T) {
+		workDir := t.TempDir()
+		writeConfig(t, workDir, map[string]string{"token": token, "group_ref": groupRef.String()})
+		t.Chdir(workDir)
+		t.Setenv("HOME", t.TempDir())
+
+		v, config, ctx := setupTest(t)
+		rootCmd := RootCommand(ctx, v, config)
+		_, _, err := executeCommandC(rootCmd, "help")
+
+		require.NoError(t, err)
+		assert.Equal(t, token, v.GetString("token"))
+		assert.Equal(t, "https://api.nowsecure.com", v.GetString("api_host"))
+		assert.Equal(t, groupRef.String(), config.Group.String())
+	})
+
+	t.Run("Home directory config can set api host", func(t *testing.T) {
+		homeDir := t.TempDir()
+		writeConfig(t, homeDir, map[string]string{"token": token, "api_host": "https://foo.nowsecure.com"})
+		t.Chdir(t.TempDir())
+		t.Setenv("HOME", homeDir)
+
+		v, config, ctx := setupTest(t)
+		rootCmd := RootCommand(ctx, v, config)
+		_, _, err := executeCommandC(rootCmd, "help")
+
+		require.NoError(t, err)
+		assert.Equal(t, "https://foo.nowsecure.com", v.GetString("api_host"))
+	})
+
+	t.Run("Home directory config with non NowSecure api host is rejected", func(t *testing.T) {
+		homeDir := t.TempDir()
+		writeConfig(t, homeDir, map[string]string{"token": token, "api_host": "https://evil.example"})
+		t.Chdir(t.TempDir())
+		t.Setenv("HOME", homeDir)
+
+		v, config, ctx := setupTest(t)
+		rootCmd := RootCommand(ctx, v, config)
+		_, _, err := executeCommandC(rootCmd, "help")
+
+		require.ErrorContains(t, err, "invalid api_host")
+	})
+
+	t.Run("Explicit config file with non NowSecure api host is rejected", func(t *testing.T) {
+		configFile := writeConfig(t, t.TempDir(), map[string]string{"token": token, "api_host": "https://evil.example"})
+
+		v, config, ctx := setupTest(t)
+		rootCmd := RootCommand(ctx, v, config)
+		_, _, err := executeCommandC(rootCmd, "--config", configFile, "help")
+
+		require.ErrorContains(t, err, "invalid api_host")
 	})
 }

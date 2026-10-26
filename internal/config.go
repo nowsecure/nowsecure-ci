@@ -3,6 +3,8 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -48,6 +50,19 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 		return nil, errors.New("API host must be specified either in a config file, the api_host envvar, or through the --api-host flag")
 	}
 
+	APIHost, err := validateHost("api_host", APIHost)
+	if err != nil {
+		return nil, err
+	}
+
+	UIHost := v.GetString("ui_host")
+	if UIHost != "" {
+		UIHost, err = validateHost("ui_host", UIHost)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if token == "" {
 		return nil, errors.New("token must be specified either in a config file, an envvar, or through a flag")
 	}
@@ -91,7 +106,7 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 	}
 
 	return &BaseConfig{
-		UIHost:         v.GetString("ui_host"),
+		UIHost:         UIHost,
 		PlatformClient: platformClient,
 		Group:          group,
 		LogLevel:       logLevel,
@@ -99,6 +114,51 @@ func NewBaseConfig(v *viper.Viper) (*BaseConfig, error) {
 		OutputFormat:   format,
 		UserAgent:      userAgent,
 	}, nil
+}
+
+var allowedHostDomains = []string{"nowsecure.com", "nowsecure.io"}
+
+// validateHost ensures a host URL is safe to send the API token to: https (or
+// http on loopback only), no userinfo, and a NowSecure or loopback host.
+func validateHost(name, raw string) (string, error) {
+	raw = strings.TrimRight(raw, "/")
+
+	u, err := url.Parse(raw)
+	if err != nil || u.Hostname() == "" {
+		return "", fmt.Errorf("invalid %s %q: must be an absolute URL such as https://api.nowsecure.com", name, raw)
+	}
+
+	if u.User != nil {
+		return "", fmt.Errorf("invalid %s: must not contain user credentials", name)
+	}
+
+	host := strings.ToLower(u.Hostname())
+	loopback := host == "localhost"
+	if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
+		loopback = true
+	}
+
+	switch u.Scheme {
+	case "https":
+	case "http":
+		if !loopback {
+			return "", fmt.Errorf("invalid %s %q: http is only allowed for localhost, use https", name, raw)
+		}
+	default:
+		return "", fmt.Errorf("invalid %s %q: scheme must be https", name, raw)
+	}
+
+	if loopback {
+		return raw, nil
+	}
+
+	for _, domain := range allowedHostDomains {
+		if host == domain || strings.HasSuffix(host, "."+domain) {
+			return raw, nil
+		}
+	}
+
+	return "", fmt.Errorf("invalid %s %q: host must be a %s domain", name, raw, strings.Join(allowedHostDomains, " or "))
 }
 
 func NewRunConfig(v *viper.Viper) (*RunConfig, error) {

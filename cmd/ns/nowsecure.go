@@ -3,7 +3,9 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -90,5 +92,43 @@ func readConfigFile(v *viper.Viper) error {
 		v.AddConfigPath(home)
 	}
 	v.AddConfigPath(".")
-	return v.ReadInConfig()
+	if err := v.ReadInConfig(); err != nil {
+		return err
+	}
+
+	return checkWorkingDirConfig(v, home)
+}
+
+// workingDirRestrictedKeys may not be set from a config file discovered in the
+// working directory, since that directory may be attacker controlled (e.g. a
+// checked out repository) and these values determine where the token is sent.
+var workingDirRestrictedKeys = []string{"api_host", "ui_host"}
+
+func checkWorkingDirConfig(v *viper.Viper, home string) error {
+	configFile := v.ConfigFileUsed()
+	if home != "" && sameDir(filepath.Dir(configFile), home) {
+		return nil
+	}
+
+	for _, key := range workingDirRestrictedKeys {
+		if v.InConfig(key) {
+			return fmt.Errorf("%s may not be set in a config file discovered in the working directory (%s); use a flag, an NS_ envvar, $HOME/.ns-ci.yaml, or --config instead", key, configFile)
+		}
+	}
+
+	return nil
+}
+
+func sameDir(a, b string) bool {
+	resolve := func(p string) string {
+		if abs, err := filepath.Abs(p); err == nil {
+			p = abs
+		}
+		if resolved, err := filepath.EvalSymlinks(p); err == nil {
+			p = resolved
+		}
+		return p
+	}
+
+	return resolve(a) == resolve(b)
 }
