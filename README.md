@@ -57,6 +57,10 @@ token: your-api-token
 group_ref: your-group-uuid
 ```
 
+For security reasons, `api_host` and `ui_host` are not accepted from a
+`.ns-ci.yaml` found in the working directory. Set them with a flag, an environment variable, `$HOME/.ns-ci.yaml`, or a file passed explicitly
+with `--config`.
+
 ### Command-Line Flags
 
 Flags can be provided explicitly as part of the CLI command itself
@@ -88,6 +92,9 @@ The tool provides three methods to run security assessments:
   
 - `--ui-host` - UI base URL (default: `https://app.nowsecure.com`)
   - Use this to point to a different NowSecure instance is you are accessing a single tenant instance
+
+Both hosts must use `https` and be a `nowsecure.com` or `nowsecure.io`
+domain/sub-domain (`http` connections are only allowable for `localhost`).
 
 #### Analysis Type
 
